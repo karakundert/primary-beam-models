@@ -58,11 +58,18 @@ def makeMS(runnum=0, noise=True, supports=True,
                    nchan=nchan, reffreq=reffreq, model=False);
   makeResidualImage(msname,resname,imsize,cellsize,ra0, dec0, nchan, reffreq);
 
+  # The sources are located in one quadrant of the sky, and therefore one
+  # quadrant of the primary beam. The statistics are chosen such that off
+  # source is on the far side of the opposite quadrant from the sources, and
+  # the near source stats are on the axis in the adjacent quadrant to the
+  # sources. If you change the image size (imsize), then you must change the
+  # statistics regions to match.
+
   ia.open(resname)
   stats0 = ia.statistics(logfile=dirname+'/all_stats.txt')
-  qq = rg.box(blc=[600,100,0,0],trc=[700,200,0,0])
+  qq = rg.box(blc=[1500,100,0,0],trc=[1600,200,0,0])
   stats1 = ia.statistics(region=qq,logfile=dirname+'/off_source_stats.txt')
-  qq = rg.box(blc=[405,405,0,0],trc=[415,415,0,0])
+  qq = rg.box(blc=[1030,1030,0,0],trc=[1040,1040,0,0])
   stats2 = ia.statistics(region=qq,logfile=dirname+'/near_source_stats.txt')
   ia.close()
 

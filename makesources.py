@@ -45,10 +45,11 @@ def makeComponentList(clname="sim.cl",reffreq="1.42GHz",
 
 ## Define the locations of your sources ( check that these locations are within the image
 ### field of you that you are simulating ! )
+
 clname = 'mysources.cl';
 ra0="19:59:28.500";
 dec0="+40.44.01.50";
-ncomps = 300;
+ncomps = 1000;
 #shapes = ["point","point","point","gaussian","gaussian"];
 #fluxvals = [1.0,1.0,1.0,0.0,0.0];
 #minaxes = ["","","","0.5arcmin","0.3arcmin"];
@@ -59,19 +60,19 @@ ncomps = 300;
 #spxs = [0.0,0.0,0.0,0.0,0.0];
 reffreq = '1.5GHz'
 
-shapes = ["point" for x in range(300)]
-fluxvals = ones(300,float)
-minaxes = empty(300)
-minaxes = ["" for x in range(300)]
-majaxes = ["" for x in range(300)]
-posangles = ["" for x in range(300)]
-ras = ["" for x in range(300)]
-decs = ["" for x in range(300)]
-spxs = zeros(300,float)
+shapes = ["point" for x in range(1000)]
+fluxvals = ones(1000,float)
+minaxes = empty(1000)
+minaxes = ["" for x in range(1000)]
+majaxes = ["" for x in range(1000)]
+posangles = ["" for x in range(1000)]
+ras = ["" for x in range(1000)]
+decs = ["" for x in range(1000)]
+spxs = zeros(1000,float)
 random.seed(1)
-for i in arange(300):
-    ra = 40*random.random()
-    dec = 40*random.random()
+for i in arange(1000):
+    ra = 100*random.random()
+    dec = 100*random.random()
     ra = str(ra)+"arcmin"
     dec = str(dec)+"arcmin"
     ras[i] = ra
