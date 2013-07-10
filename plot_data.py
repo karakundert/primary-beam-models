@@ -1,5 +1,6 @@
 from glob import glob
-filenames = glob('phase/Data*')
+# choose the comparable data set
+filenames = glob('rotate/Data*')
 
 import re
 numRegex = r"[+-]?([0-9]+\.)?[0-9]+([eE][+-][0-9]+)?"
@@ -63,7 +64,8 @@ print rmsValuesNear
 print rmsValuesOff
 
 pl.clf()
-pl.title("RMS Levels in Phase Simulation")
-pl.plot(xvals,rmsValues,'b')
-pl.plot(xvals,rmsValuesNear,'g')
-pl.plot(xvals,rmsValuesOff,'r')
+pl.title("RMS Levels in Rotation Simulation")
+p1 = pl.plot(xvals,rmsValues,'b')
+p2 = pl.plot(xvals,rmsValuesNear,'g')
+p3 = pl.plot(xvals,rmsValuesOff,'r')
+pl.legend([p1,p2,p3],["Whole Sky", "Near Source", "Off Source"], loc = 2)
