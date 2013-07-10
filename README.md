@@ -12,7 +12,7 @@ The CASA package must be installed in order to be able to run this simulation.
 
 To run the program, type these commands into the CASA terminal.
 
-execfile('makesources.py')
-execfile('simsky.py')
-execfile('run_test.py')
-run_test()
+    execfile('makesources.py')
+    execfile('simsky.py')
+    execfile('run_test.py')
+    run_test()
