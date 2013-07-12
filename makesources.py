@@ -46,40 +46,42 @@ def makeComponentList(clname="sim.cl",reffreq="1.42GHz",
 ## Define the locations of your sources ( check that these locations are within the image
 ### field of you that you are simulating ! )
 
-clname = 'mysources.cl';
+clname = 'mysources';
 ra0="19:59:28.500";
 dec0="+40.44.01.50";
-ncomps = 1000;
-#shapes = ["point","point","point","gaussian","gaussian"];
-#fluxvals = [1.0,1.0,1.0,0.0,0.0];
-#minaxes = ["","","","0.5arcmin","0.3arcmin"];
-#majaxes = ["","","","0.5arcmin","0.5arcmin"];
-#posangles = ["","","","0.0deg","45deg"];
-#ras =  ["11.3arcmin","0.0arcmin","-2.7arcmin","0.0arcmin","-11.0arcmin"];
-#decs = ["2.7arcmin","0.0arcmin","-11.3arcmin","0.0arcmin","5.0arcmin"];
-#spxs = [0.0,0.0,0.0,0.0,0.0];
-reffreq = '1.5GHz'
+reffreq = '6.0GHz'
 
-shapes = ["point" for x in range(1000)]
-fluxvals = ones(1000,float)
-minaxes = empty(1000)
-minaxes = ["" for x in range(1000)]
-majaxes = ["" for x in range(1000)]
-posangles = ["" for x in range(1000)]
-ras = ["" for x in range(1000)]
-decs = ["" for x in range(1000)]
-spxs = zeros(1000,float)
-random.seed(1)
-for i in arange(1000):
-    ra = 100*random.random()
-    dec = 100*random.random()
-    ra = str(ra)+"arcmin"
-    dec = str(dec)+"arcmin"
-    ras[i] = ra
-    decs[i] = dec
+#ncomps = 1000;
+#shapes = ["point" for x in range(1000)]
+#fluxvals = ones(1000,float)
+#minaxes = empty(1000)
+#minaxes = ["" for x in range(1000)]
+#majaxes = ["" for x in range(1000)]
+#posangles = ["" for x in range(1000)]
+#ras = ["" for x in range(1000)]
+#decs = ["" for x in range(1000)]
+#spxs = zeros(1000,float)
+#random.seed(1)
+#for i in arange(1000):
+#    ra = 100*random.random()
+#    dec = 100*random.random()
+#    ra = str(ra)+"arcmin"
+#    dec = str(dec)+"arcmin"
+#    ras[i] = ra
+#    decs[i] = dec
 
 ## Make a list of components.
-makeComponentList(clname=clname,ncomps=ncomps,shapes=shapes,fluxvals=fluxvals, minaxes=minaxes, majaxes=majaxes, posangles=posangles,ras=ras,decs=decs,spxs=spxs,reffreq=reffreq);
+# components placed such that there is one source per simulation, placed at
+# full-power, half-power, and around 10-20% power points of the beam.
+makeComponentList(clname=clname+'0.cl',ncomps=1,shapes=['point'],fluxvals=[1.0],
+        minaxes=[""], majaxes=[""], posangles=[""],ras=["0.0arcmin"],decs=["0.0arcmin"],
+        spxs=[0.0],reffreq=reffreq);
+makeComponentList(clname=clname+'1.cl',ncomps=1,shapes=['point'],fluxvals=[1.0],
+        minaxes=[""], majaxes=[""], posangles=[""],ras=["3.4arcmin"],decs=["3.4arcmin"],
+        spxs=[0.0],reffreq=reffreq);
+makeComponentList(clname=clname+'2.cl',ncomps=1,shapes=['point'],fluxvals=[1.0],
+        minaxes=[""], majaxes=[""], posangles=[""],ras=["5.5arcmin"],decs=["5.5arcmin"],
+        spxs=[0.0],reffreq=reffreq);
 
 
 ## Un-comment and put these few lines into the  makeTrueImage() function - in the place where you've been modifying the source positions. This will evaluate the components onto the image grid. You should be able to see the Gaussians in the 'true' image after this. 

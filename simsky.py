@@ -24,12 +24,13 @@ def makeMS(runnum=0, noise=0.0, supports=True,
   imname = basename+'.true.im';
   resname = dirname+"/pb-residuals-"+str(runnum)
   pbname = dirname+"/primary-beam"
+  clname = "mysources"
   ra0="19:59:28.500";
   dec0="+40.44.01.50";
   nchan=1;
   imsize=2048;
-  cellsize='0.1arcmin';
-  reffreq='1.5GHz';
+  cellsize='0.07arcmin';
+  reffreq='6.0GHz';
   stokesvals=[1.0,0.0,0.0,0.0]
   ftm='ft'
 
@@ -37,26 +38,35 @@ def makeMS(runnum=0, noise=0.0, supports=True,
   os.system('rm -rf '+resname)
   os.system('rm -rf theresult.*')
 
-  makeMSFrame(dirname=dirname,msname=msname,ra0=ra0,dec0=dec0,nchan=nchan);
-  addNoise(msname);
-  area = makeTrueImage(stokesvals=stokesvals,msname=msname,imname=imname,
-                pbname=pbname+"-model",imsize=imsize,cellsize=cellsize,
-                ra0=ra0, dec0=dec0, nchan=nchan, reffreq=reffreq,
-                noise=0.0, supports=True,offset_u='0.0arcmin',
-                offset_v='0.0arcmin',ell_u=1.0,ell_v=1.0,theta=0.0);
-  predictTrueImage(msname=msname,ftm=ftm,imname=imname,
-                   imsize=imsize,cellsize=cellsize,ra0=ra0, dec0=dec0,
-                   nchan=nchan, reffreq=reffreq, model=True);
-  makeTrueImage(stokesvals=stokesvals,msname=msname,imname=imname,
-                pbname=pbname+"-perturbed",imsize=imsize,cellsize=cellsize,
-                ra0=ra0, dec0=dec0, nchan=nchan, reffreq=reffreq,
-                noise=noise, supports=supports,offset_u=offset_u,
-                offset_v=offset_v,ell_u=ell_u,ell_v=ell_v,theta=theta,
-                area=area);
-  predictTrueImage(msname=msname,ftm=ftm,imname=imname,
-                   imsize=imsize,cellsize=cellsize,ra0=ra0, dec0=dec0,
-                   nchan=nchan, reffreq=reffreq, model=False);
-  makeResidualImage(msname,resname,imsize,cellsize,ra0, dec0, nchan, reffreq);
+  for i in xrange(3):
+      clname = clname+str(i)+'.cl'
+      if i == 0:
+          basename = basename+'-centered'
+      elif i == 1:
+          basename = basename+'-half-power'
+      else:
+          basename = basename+'-low-power'
+      makeMSFrame(dirname=dirname,msname=msname,ra0=ra0,dec0=dec0,nchan=nchan);
+      addNoise(msname);
+      area = makeTrueImage(stokesvals=stokesvals,msname=msname,imname=imname,
+                    pbname=pbname+"-model",clname=clname,imsize=imsize,cellsize=cellsize,
+                    ra0=ra0, dec0=dec0, nchan=nchan, reffreq=reffreq,
+                    noise=0.0, supports=True,offset_u='0.0arcmin',
+                    offset_v='0.0arcmin',ell_u=1.0,ell_v=1.0,theta=0.0);
+      predictTrueImage(msname=msname,ftm=ftm,imname=imname,
+                       imsize=imsize,cellsize=cellsize,ra0=ra0, dec0=dec0,
+                       nchan=nchan, reffreq=reffreq, model=True);
+      makeTrueImage(stokesvals=stokesvals,msname=msname,imname=imname,
+                    pbname=pbname+"-perturbed",clname=clname,imsize=imsize,cellsize=cellsize,
+                    ra0=ra0, dec0=dec0, nchan=nchan, reffreq=reffreq,
+                    noise=noise, supports=supports,offset_u=offset_u,
+                    offset_v=offset_v,ell_u=ell_u,ell_v=ell_v,theta=theta,
+                    area=area);
+      predictTrueImage(msname=msname,ftm=ftm,imname=imname,
+                       imsize=imsize,cellsize=cellsize,ra0=ra0, dec0=dec0,
+                       nchan=nchan, reffreq=reffreq, model=False);
+      makeResidualImage(msname,resname,imsize,cellsize,ra0, dec0, nchan, reffreq);
+      clname = 'mysources'
 
   # The sources are located in one quadrant of the sky, and therefore one
   # quadrant of the primary beam. The statistics are chosen such that off
@@ -142,7 +152,7 @@ def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',reffreq='1.5GHz', noise =
         freq = qa.convert(qa.quantity(reffreq),'Hz')['value']
         c = 3e8
         wvlen = c / freq # observed wavelength
-        d = 100 # width of a dish in m
+        d = 25 # width of a dish in m
         spat_lam = d / wvlen
 
         # Image pixels
@@ -266,7 +276,8 @@ def makeResidualImage(msname='',resname='',imsize=256,cellsize='8.0arcsec',
 ###############################################
 
 def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],msname='',
-                   imname='',pbname='',imsize=256,cellsize='8.0arcsec',
+                   imname='',pbname='',clname='mysources.cl',
+                   imsize=256,cellsize='8.0arcsec',
                    ra0='', dec0='', nchan=1, reffreq='1.5GHz',
                    noise=0.0, supports=True,
                    offset_u = '0.0arcmin', offset_v = '0.0arcmin',
