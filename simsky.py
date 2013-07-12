@@ -14,7 +14,7 @@ import random
 
 ###############################################
 
-def makeMS(runnum=0, noise=True, supports=True,
+def makeMS(runnum=0, noise=0.0, supports=True,
            offset_u = '0.0arcmin', offset_v = '0.0arcmin',
            ell_u = 1.0, ell_v = 1.0, theta = 0.0):
 
@@ -42,7 +42,7 @@ def makeMS(runnum=0, noise=True, supports=True,
   area = makeTrueImage(stokesvals=stokesvals,msname=msname,imname=imname,
                 pbname=pbname+"-model",imsize=imsize,cellsize=cellsize,
                 ra0=ra0, dec0=dec0, nchan=nchan, reffreq=reffreq,
-                noise=False, supports=True,offset_u='0.0arcmin',
+                noise=0.0, supports=True,offset_u='0.0arcmin',
                 offset_v='0.0arcmin',ell_u=1.0,ell_v=1.0,theta=0.0);
   predictTrueImage(msname=msname,ftm=ftm,imname=imname,
                    imsize=imsize,cellsize=cellsize,ra0=ra0, dec0=dec0,
@@ -124,7 +124,7 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan):
 ###############################################
 
 def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',reffreq='1.5GHz', noise =
-                    True, supports=True, offset_u='0.0arcmin',
+                    0.0, supports=True, offset_u='0.0arcmin',
                     offset_v='0.0arcmin', ell_u = 1.0, ell_v = 1.0,
                     theta = 0.0, area = -1):
 
@@ -186,12 +186,10 @@ def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',reffreq='1.5GHz', noise =
                                 aper1[u][v] = 0
                             elif u == (Nuv/2 - 1) or v == (Nuv/2 - 1):
                                 aper1[u][v] = 0
-                            elif noise == True:
-                                aper1[u][v] = 1.0 + random.gauss(0,0.5)
                             else:
-                                aper1[u][v] = 1.0;
+                                aper1[u][v] = 1.0 + random.gauss(0,noise);
                         else:
-                            aper1[u][v] = 1.0;
+                            aper1[u][v] = 1.0 + random.gauss(0,noise);
 
         aper=ndimage.rotate(input=aper1,angle=theta,reshape=False)
 
@@ -270,7 +268,7 @@ def makeResidualImage(msname='',resname='',imsize=256,cellsize='8.0arcsec',
 def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],msname='',
                    imname='',pbname='',imsize=256,cellsize='8.0arcsec',
                    ra0='', dec0='', nchan=1, reffreq='1.5GHz',
-                   noise=True, supports=True,
+                   noise=0.0, supports=True,
                    offset_u = '0.0arcmin', offset_v = '0.0arcmin',
                    ell_u = 1.0, ell_v = 1.0, theta = 0.0, area=-1):
 
