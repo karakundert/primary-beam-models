@@ -18,27 +18,28 @@ def makeMS(runnum=0, noise=0.0, supports=True,
            offset_u = '0.0arcmin', offset_v = '0.0arcmin',
            ell_u = 1.0, ell_v = 1.0, theta = 0.0):
 
-  dirname = "Data"+str(runnum)
-  basename = dirname+"/points"
-  msname = basename + '.ms';
-  imname = basename+'.true.im';
-  resname = dirname+"/pb-residuals-"+str(runnum)
-  pbname = dirname+"/primary-beam"
-  clname = "mysources"
-  ra0="19:59:28.500";
-  dec0="+40.44.01.50";
-  nchan=1;
-  imsize=2048;
-  cellsize='0.07arcmin';
-  reffreq='6.0GHz';
-  stokesvals=[1.0,0.0,0.0,0.0]
-  ftm='ft'
-
-  os.system('rm -rf '+dirname)
-  os.system('rm -rf '+resname)
-  os.system('rm -rf theresult.*')
 
   for i in xrange(3):
+      dirname = "Data"+str(runnum)
+      basename = dirname+"/points"
+      msname = basename + '.ms';
+      imname = basename+'.true.im';
+      resname = dirname+"/pb-residuals-"+str(runnum)
+      pbname = dirname+"/primary-beam"
+      clname = "mysources"
+      ra0="19:59:28.500";
+      dec0="+40.44.01.50";
+      nchan=1;
+      imsize=2048;
+      cellsize='0.07arcmin';
+      reffreq='6.0GHz';
+      stokesvals=[1.0,0.0,0.0,0.0]
+      ftm='ft'
+
+      os.system('rm -rf '+dirname)
+      os.system('rm -rf '+resname)
+      os.system('rm -rf theresult.*')
+
       clname = clname+str(i)+'.cl'
       if i == 0:
           basename = basename+'-centered'
@@ -46,6 +47,7 @@ def makeMS(runnum=0, noise=0.0, supports=True,
           basename = basename+'-half-power'
       else:
           basename = basename+'-low-power'
+
       makeMSFrame(dirname=dirname,msname=msname,ra0=ra0,dec0=dec0,nchan=nchan);
       addNoise(msname);
       area = makeTrueImage(stokesvals=stokesvals,msname=msname,imname=imname,
