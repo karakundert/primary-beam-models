@@ -63,9 +63,17 @@ print rmsValues
 print rmsValuesNear
 print rmsValuesOff
 
+noise = 50
+rotate = 45
+eccentricity = 5
+phase = 2.0
+
+x_axis = arange(0,noise,len(filenames))
+
 pl.clf()
 pl.title("RMS Levels in Noise Simulation")
-p1 = pl.plot(xvals,rmsValues,'b')
-p2 = pl.plot(xvals,rmsValuesNear,'g')
-p3 = pl.plot(xvals,rmsValuesOff,'r')
+p1 = pl.plot(x_axis,rmsValues,'b')
+p2 = pl.plot(x_axis,rmsValuesNear,'g')
+p3 = pl.plot(x_axis,rmsValuesOff,'r')
+pl.xlabel("Percent of Amplitude")
 pl.legend([p1,p2,p3],["Whole Sky", "Near Source", "Off Source"], loc = 2)

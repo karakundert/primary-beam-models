@@ -9,6 +9,7 @@ from scipy import ndimage
 
 import matplotlib.pylab as pl
 import random
+import os
 
 
 def run_test(runnum=0):
@@ -21,11 +22,15 @@ def run_test(runnum=0):
             makeMS(runnum,noise=noise)
             runnum += 1
 
+        os.system('mv Data* noise')
+
         print "Support Beams On/Off"
         print "Run Number = ", runnum
 
         makeMS(runnum,supports=False)
         runnum += 1
+
+        os.system('mv Data* noise')
 
         runnum = 20
 
@@ -37,6 +42,8 @@ def run_test(runnum=0):
             makeMS(runnum,noise=False,theta=theta)
             runnum += 1
 
+        os.system('mv Data* noise')
+
         runnum = 30
 
         for i in linspace(1.0,1.05,6):
@@ -47,6 +54,8 @@ def run_test(runnum=0):
             makeMS(runnum,noise=False,ell_u=ell_u)
             runnum += 1
 
+        os.system('mv Data* noise')
+
         runnum = 40
 
         for i in linspace(0,2.0,10):
@@ -56,3 +65,5 @@ def run_test(runnum=0):
             print "offset = "+ offset
             makeMS(runnum,noise=False,offset_u=offset)
             runnum += 1
+
+        os.system('mv Data* noise')
