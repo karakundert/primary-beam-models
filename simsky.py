@@ -22,6 +22,12 @@ def makeMS(runnum=0, noise=0.0, supports=True,
   for i in xrange(3):
       dirname = "Data"+str(runnum)
       basename = dirname+"/points"
+      if i == 0:
+          basename = basename+"-centered"
+      elif i == 1:
+          basename = basename+"-half-power"
+      else:
+          basename = basename+"-low-power"
       msname = basename + '.ms';
       imname = basename+'.true.im';
       resname = dirname+"/pb-residuals-"+str(runnum)
@@ -41,13 +47,6 @@ def makeMS(runnum=0, noise=0.0, supports=True,
       os.system('rm -rf theresult.*')
 
       clname = clname+str(i)+'.cl'
-      if i == 0:
-          basename = basename+'-centered'
-      elif i == 1:
-          basename = basename+'-half-power'
-      else:
-          basename = basename+'-low-power'
-
       makeMSFrame(dirname=dirname,msname=msname,ra0=ra0,dec0=dec0,nchan=nchan);
       addNoise(msname);
       area = makeTrueImage(stokesvals=stokesvals,msname=msname,imname=imname,
