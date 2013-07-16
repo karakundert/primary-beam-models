@@ -21,13 +21,13 @@ def makeMS(runnum=0, noise=0.0, supports=True,
 
   for i in xrange(3):
       dirname = "Data"+str(runnum)
-      basename = dirname+"/points"
       if i == 0:
-          basename = basename+"-centered"
+          dirname = dirname+"-centered"
       elif i == 1:
-          basename = basename+"-half-power"
+          dirname = dirname+"-half-power"
       else:
-          basename = basename+"-low-power"
+          dirname = dirname+"-low-power"
+      basename = dirname+"/points"
       msname = basename + '.ms';
       imname = basename+'.true.im';
       resname = dirname+"/pb-residuals-"+str(runnum)
