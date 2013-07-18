@@ -22,6 +22,8 @@ def run_test(runnum=0):
             makeMS(runnum,noise=noise)
             runnum += 1
 
+        os.system('rm -rf noise')
+        os.system('mkdir noise')
         os.system('mv Data* noise')
 
         print "Support Beams On/Off"
@@ -30,7 +32,9 @@ def run_test(runnum=0):
         makeMS(runnum,supports=False)
         runnum += 1
 
-        os.system('mv Data* noise')
+        os.system('rm -rf supports')
+        os.system('mkdir supports')
+        os.system('mv Data* supports')
 
         runnum = 20
 
@@ -42,7 +46,9 @@ def run_test(runnum=0):
             makeMS(runnum,noise=False,theta=theta)
             runnum += 1
 
-        os.system('mv Data* noise')
+        os.system('rm -rf rotate')
+        os.system('mkdir rotate')
+        os.system('mv Data* rotate')
 
         runnum = 30
 
@@ -54,7 +60,9 @@ def run_test(runnum=0):
             makeMS(runnum,noise=False,ell_u=ell_u)
             runnum += 1
 
-        os.system('mv Data* noise')
+        os.system('rm -rf eccentricity')
+        os.system('mkdir eccentricity')
+        os.system('mv Data* eccentricity')
 
         runnum = 40
 
@@ -66,4 +74,6 @@ def run_test(runnum=0):
             makeMS(runnum,noise=False,offset_u=offset)
             runnum += 1
 
-        os.system('mv Data* noise')
+        os.system('rm -rf phase')
+        os.system('mkdir phase')
+        os.system('mv Data* phase')

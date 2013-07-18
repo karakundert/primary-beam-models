@@ -38,7 +38,7 @@ def makeMS(runnum=0, noise=0.0, supports=True,
       nchan=1;
       imsize=2048;
       cellsize='0.07arcmin';
-      reffreq='6.0GHz';
+      reffreq='12.0GHz';
       stokesvals=[1.0,0.0,0.0,0.0]
       ftm='ft'
 
@@ -50,7 +50,8 @@ def makeMS(runnum=0, noise=0.0, supports=True,
       makeMSFrame(dirname=dirname,msname=msname,ra0=ra0,dec0=dec0,nchan=nchan);
       addNoise(msname);
       area = makeTrueImage(stokesvals=stokesvals,msname=msname,imname=imname,
-                    pbname=pbname+"-model",clname=clname,imsize=imsize,cellsize=cellsize,
+                    pbname=pbname+"-model",clname=clname,image=dirname+"/model",
+                    imsize=imsize,cellsize=cellsize,
                     ra0=ra0, dec0=dec0, nchan=nchan, reffreq=reffreq,
                     noise=0.0, supports=True,offset_u='0.0arcmin',
                     offset_v='0.0arcmin',ell_u=1.0,ell_v=1.0,theta=0.0);
@@ -58,7 +59,8 @@ def makeMS(runnum=0, noise=0.0, supports=True,
                        imsize=imsize,cellsize=cellsize,ra0=ra0, dec0=dec0,
                        nchan=nchan, reffreq=reffreq, model=True);
       makeTrueImage(stokesvals=stokesvals,msname=msname,imname=imname,
-                    pbname=pbname+"-perturbed",clname=clname,imsize=imsize,cellsize=cellsize,
+                    pbname=pbname+"-perturbed",clname=clname,image=dirname+"/perturbed",
+                    imsize=imsize,cellsize=cellsize,
                     ra0=ra0, dec0=dec0, nchan=nchan, reffreq=reffreq,
                     noise=noise, supports=supports,offset_u=offset_u,
                     offset_v=offset_v,ell_u=ell_u,ell_v=ell_v,theta=theta,
@@ -135,9 +137,10 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan):
 
 ###############################################
 
-def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',reffreq='1.5GHz', noise =
-                    0.0, supports=True, offset_u='0.0arcmin',
-                    offset_v='0.0arcmin', ell_u = 1.0, ell_v = 1.0,
+def makePrimaryBeam(image="model",imsize=256,cellsize='8.0arcsec',
+                    reffreq='1.5GHz', noise = 0.0, supports=True,
+                    offset_u='0.0arcmin', offset_v='0.0arcmin',
+                    ell_u = 1.0, ell_v = 1.0,
                     theta = 0.0, area = -1):
 
         # noise == True: there is Gaussian noise in the aperture function
@@ -208,6 +211,7 @@ def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',reffreq='1.5GHz', noise =
         pl.figure(1)
         pl.clf()
         pl.imshow(aper)
+        pl.savefig(image+".png")
         
         # Add phase ramp to aperture function
         phs_off_u = qa.quantity(offset_u)['value']
@@ -279,7 +283,7 @@ def makeResidualImage(msname='',resname='',imsize=256,cellsize='8.0arcsec',
 
 def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],msname='',
                    imname='',pbname='',clname='mysources.cl',
-                   imsize=256,cellsize='8.0arcsec',
+                   image="model",imsize=256,cellsize='8.0arcsec',
                    ra0='', dec0='', nchan=1, reffreq='1.5GHz',
                    noise=0.0, supports=True,
                    offset_u = '0.0arcmin', offset_v = '0.0arcmin',
@@ -306,8 +310,8 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],msname='',
   ia.modify(model=cl.torecord(),subtract=False);
   cl.close();
   vals = ia.getchunk();
-  pb,aper_area = makePrimaryBeam(imsize,cellsize,reffreq, noise, supports, offset_u,
-                       offset_v, ell_u, ell_v, theta, area);
+  pb,aper_area = makePrimaryBeam(image,imsize,cellsize,reffreq, noise,
+          supports, offset_u, offset_v, ell_u, ell_v, theta, area);
   vals[:,:,0,0] = vals[:,:,0,0] * real(pb[:,:]);
   ia.putchunk(vals);
   ia.close();

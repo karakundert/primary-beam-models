@@ -49,7 +49,7 @@ def makeComponentList(clname="sim.cl",reffreq="1.42GHz",
 clname = 'mysources';
 ra0="19:59:28.500";
 dec0="+40.44.01.50";
-reffreq = '6.0GHz'
+reffreq = '12.0GHz'
 
 #ncomps = 1000;
 #shapes = ["point" for x in range(1000)]
