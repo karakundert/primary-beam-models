@@ -77,10 +77,12 @@ makeComponentList(clname=clname+'0.cl',ncomps=1,shapes=['point'],fluxvals=[1.0],
         minaxes=[""], majaxes=[""], posangles=[""],ras=["0.0arcmin"],decs=["0.0arcmin"],
         spxs=[0.0],reffreq=reffreq);
 makeComponentList(clname=clname+'1.cl',ncomps=1,shapes=['point'],fluxvals=[1.0],
-        minaxes=[""], majaxes=[""], posangles=[""],ras=["1.2arcmin"],decs=["1.2arcmin"],
+        minaxes=[""], majaxes=[""],
+        posangles=[""],ras=["1.22arcmin"],decs=["1.22arcmin"],
         spxs=[0.0],reffreq=reffreq);
 makeComponentList(clname=clname+'2.cl',ncomps=1,shapes=['point'],fluxvals=[1.0],
-        minaxes=[""], majaxes=[""], posangles=[""],ras=["2.0arcmin"],decs=["2.0arcmin"],
+        minaxes=[""], majaxes=[""],
+        posangles=[""],ras=["2.02arcmin"],decs=["2.02arcmin"],
         spxs=[0.0],reffreq=reffreq);
 
 
