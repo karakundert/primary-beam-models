@@ -137,6 +137,12 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan):
 
 ###############################################
 
+def imageFromArray(arr,outfile,linear=F):
+    newia = casac.image()
+    newia.fromarray(outfile=outfile,pixels=arr,linear=F,overwrite=T)
+
+###############################################
+
 def makePrimaryBeam(image="model",imsize=256,cellsize='8.0arcsec',
                     reffreq='1.5GHz', noise = 0.0, supports=True,
                     offset_u='0.0arcmin', offset_v='0.0arcmin',
@@ -189,7 +195,7 @@ def makePrimaryBeam(image="model",imsize=256,cellsize='8.0arcsec',
         uu, vv = mgrid[:Nuv, :Nuv]
         circle = (ell_u * (uu - ((Nuv/2.0) - 0.5)) ** 2) + (ell_v * (vv -
                  ((Nuv/2.0) - 0.5)) ** 2)
-        disk = circle < 4*(d_uv/2.0)**2
+        disk = circle < (d_uv/2.0)**2
         aper[disk] = 1.0
         for u in xrange(Nuv):
             for v in xrange(Nuv):
@@ -211,7 +217,7 @@ def makePrimaryBeam(image="model",imsize=256,cellsize='8.0arcsec',
         pl.figure(1)
         pl.clf()
         pl.imshow(aper)
-        pl.savefig(image+".png")
+        imageFromArray(aper,image)
         
         # Add phase ramp to aperture function
         phs_off_u = qa.quantity(offset_u)['value']
