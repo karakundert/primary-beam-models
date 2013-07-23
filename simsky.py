@@ -69,7 +69,7 @@ def makeMS(runnum=0, noise=0.0, supports=True,
                        imsize=imsize,cellsize=cellsize,ra0=ra0, dec0=dec0,
                        nchan=nchan, reffreq=reffreq, model=False);
       makeResidualImage(msname,resname,imsize,cellsize,ra0, dec0, nchan, reffreq);
-      immath(images=[dirname+"/primary-beam-model", dirname+"/primary-beam-perturbed"],
+      immath(imagename=[dirname+"/primary-beam-model", dirname+"/primary-beam-perturbed"],
               expr='(IM0-IM1)',outfile=dirname+"/pbdiff.im")
       clname = 'mysources'
 
