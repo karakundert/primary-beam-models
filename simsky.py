@@ -49,7 +49,7 @@ def makeMS(runnum=0, noise=0.0, supports=True,
       clname = clname+str(i)+'.cl'
       makeMSFrame(dirname=dirname,msname=msname,ra0=ra0,dec0=dec0,nchan=nchan);
       addNoise(msname);
-      area = makeTrueImage(stokesvals=stokesvals,msname=msname,imname=imname,
+      pb1,area1 = makeTrueImage(stokesvals=stokesvals,msname=msname,imname=imname,
                     pbname=pbname+"-model",clname=clname,image=dirname+"/model",
                     imsize=imsize,cellsize=cellsize,
                     ra0=ra0, dec0=dec0, nchan=nchan, reffreq=reffreq,
@@ -58,17 +58,19 @@ def makeMS(runnum=0, noise=0.0, supports=True,
       predictTrueImage(msname=msname,ftm=ftm,imname=imname,
                        imsize=imsize,cellsize=cellsize,ra0=ra0, dec0=dec0,
                        nchan=nchan, reffreq=reffreq, model=True);
-      makeTrueImage(stokesvals=stokesvals,msname=msname,imname=imname,
+      pb2,area2 = makeTrueImage(stokesvals=stokesvals,msname=msname,imname=imname,
                     pbname=pbname+"-perturbed",clname=clname,image=dirname+"/perturbed",
                     imsize=imsize,cellsize=cellsize,
                     ra0=ra0, dec0=dec0, nchan=nchan, reffreq=reffreq,
                     noise=noise, supports=supports,offset_u=offset_u,
                     offset_v=offset_v,ell_u=ell_u,ell_v=ell_v,theta=theta,
-                    area=area);
+                    area=area1);
       predictTrueImage(msname=msname,ftm=ftm,imname=imname,
                        imsize=imsize,cellsize=cellsize,ra0=ra0, dec0=dec0,
                        nchan=nchan, reffreq=reffreq, model=False);
       makeResidualImage(msname,resname,imsize,cellsize,ra0, dec0, nchan, reffreq);
+      immath(images=[dirname+"/primary-beam-model", dirname+"/primary-beam-perturbed"],
+              expr='(IM0-IM1)',outfile=dirname+"/pbdiff.im")
       clname = 'mysources'
 
       # The sources are located in one quadrant of the sky, and therefore one
@@ -82,12 +84,30 @@ def makeMS(runnum=0, noise=0.0, supports=True,
       stats0 = ia.statistics(logfile=dirname+'/all_stats.txt')
       qq = rg.box(blc=[1500,100,0,0],trc=[1600,200,0,0])
       stats1 = ia.statistics(region=qq,logfile=dirname+'/off_source_stats.txt')
-      qq = rg.box(blc=[1030,1030,0,0],trc=[1040,1040,0,0])
+      qq = rg.box(blc=[1030,1040,0,0],trc=[1050,1060,0,0])
       stats2 = ia.statistics(region=qq,logfile=dirname+'/near_source_stats.txt')
       ia.close()
 
 
   return [stats0,stats1,stats2]
+
+###############################################
+
+def makeBeamDifference(pb1="primary-beam-model",pb2="primary-beam-perturbed"):
+
+    ia.open(pb1)
+    pix1 = ia.getchunk()
+    ia.close()
+
+    ia.open(pb2)
+    pix2 = ia.getchunk()
+    ia.close()
+
+    os.system('cp -r '+pb1+' pbdiff')
+
+    ia.open("pbdiff")
+    ia.putchunk(pix1-pix2)
+    ia.close()
 
 ###############################################
 
@@ -140,6 +160,7 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan):
 def imageFromArray(arr,outfile,linear=F):
     newia = casac.image()
     newia.fromarray(outfile=outfile,pixels=arr,linear=F,overwrite=T)
+    newia.close()
 
 ###############################################
 
@@ -345,7 +366,7 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],msname='',
   #ia.putchunk(vals);
   #ia.close();
 
-  return aper_area
+  return pb,aper_area
 
 
 ###############################################
