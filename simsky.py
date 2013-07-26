@@ -63,8 +63,7 @@ def makeMS(runnum=0, noise=0.0, supports=True,
                     imsize=imsize,cellsize=cellsize,
                     ra0=ra0, dec0=dec0, nchan=nchan, reffreq=reffreq,
                     noise=noise, supports=supports,offset_u=offset_u,
-                    offset_v=offset_v,ell_u=ell_u,ell_v=ell_v,theta=theta,
-                    area=area1);
+                    offset_v=offset_v,ell_u=ell_u,ell_v=ell_v,theta=theta);
       predictTrueImage(msname=msname,ftm=ftm,imname=imname,
                        imsize=imsize,cellsize=cellsize,ra0=ra0, dec0=dec0,
                        nchan=nchan, reffreq=reffreq, model=False);
