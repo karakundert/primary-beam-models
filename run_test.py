@@ -38,7 +38,7 @@ def run_test(runnum=0):
 
         runnum = 20
 
-        for i in linspace(0,45,8):
+        for i in linspace(0,90,19):
             print "Rotation Angle"
             print "Run Number = ", runnum
             theta = i
@@ -77,3 +77,19 @@ def run_test(runnum=0):
         os.system('rm -rf phase')
         os.system('mkdir phase')
         os.system('mv Data* phase')
+
+        runnum = 50
+        
+        for i in linspace(0,45,6):
+            eccen = [1.00, 1.01, 1.02, 1.03, 1.04, 1.05]
+            print "Rotated + Eccentricity"
+            print "Run Number = ", runnum
+            ell_u = eccen[runnum]
+            print "rotation angle = "+ str(i)
+            print "eccentricity = "+ str(ell_u)
+            makeMS(runnum,noise=False,ell_u=ell_u)
+            runnum += 1
+
+        os.system('rm -rf rot_eccentricity')
+        os.system('mkdir rot_eccentricity')
+        os.system('mv Data* rot_eccentricity')
