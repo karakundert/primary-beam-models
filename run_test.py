@@ -84,10 +84,11 @@ def run_test(runnum=0):
             eccen = [1.00, 1.01, 1.02, 1.03, 1.04, 1.05]
             print "Rotated + Eccentricity"
             print "Run Number = ", runnum
+            theta = i
             ell_u = eccen[runnum]
             print "rotation angle = "+ str(i)
             print "eccentricity = "+ str(ell_u)
-            makeMS(runnum,noise=False,ell_u=ell_u)
+            makeMS(runnum,noise=False,ell_u=ell_u,theta=theta)
             runnum += 1
 
         os.system('rm -rf rot_eccentricity')
