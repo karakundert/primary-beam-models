@@ -130,7 +130,7 @@ available_tests = [
         xlabel="Percent Increase in Semimajor Axis"),
     TestSettings(
         name='rotate', desc='Rotation Angle', xaxis='rotate',
-        settings=[{'rotate': val} for val in linspace(0,45,19)],
+        settings=[{'rotate': val} for val in linspace(0,45,10)],
         xlabel="Percent Increase in Semimajor Axis"),
     TestSettings(
         name='eccentricity', desc='Eccentricity', xaxis='ell_u',
