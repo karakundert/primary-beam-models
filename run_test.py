@@ -51,13 +51,12 @@ regex = (
 pattern = re.compile(regex, re.IGNORECASE)
 
 class TestSettings:
-    def __init__(self, name, desc, xaxis, settings=[], xlabel='', xscale=1):
+    def __init__(self, name, desc, xaxis, settings=[], xlabel=''):
         self.name = name
         self.desc = desc
         self.settings = settings
         self.xaxis = xaxis
         self.xlabel = xlabel
-        self.xscale = xscale
         self.runnum = 0
 
     def run(self):
@@ -109,7 +108,7 @@ class TestSettings:
             pb_diam = 6.8
             phs_off = phase / pb_diam
 
-            x_axis = [self.xscale*each[self.xaxis] for each in self.settings]
+            x_axis = [each[self.xaxis] for each in self.settings]
             pl.clf()
             pl.title("%s - %s" % (self.description, level))
             p1 = pl.plot(x_axis,rmsValues,'b')
@@ -150,10 +149,12 @@ available_tests = [
         xlabel="Percent Increase in Semimajor Axis"),
 ]
 
-def run_test(requested_tests=[], plot=True):
+def run_test(requested_tests=[], run=True, plot=True):
+    assert run or plot
     for test in available_tests:
         if not requested_tests or test.name in requested_tests:
-            test.run()
+            if run:
+                test.run()
             if plot:
                 test.plot()
 
