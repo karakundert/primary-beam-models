@@ -12,7 +12,7 @@ import random
 import os
 
 class TestSettings:
-    def __init__(self, name, desc, values=[]):
+    def __init__(self, name, desc, values=[], settings=None):
         self.name = name
         self.desc = desc
         self.values = values
@@ -24,7 +24,11 @@ class TestSettings:
             print "Run number =", self.runnum
             self.runnum += 1
             print self.name, "=", val
-            args = {self.name: val}
+            arg = {self.name: val}
+            if settings:
+                settings.add(arg)
+            else
+                settings = arg
             makeMS(runnum="%03d" % self.runnum, **args)
 
         os.system('rm -rf %s' % self.name)
