@@ -12,19 +12,18 @@ import random
 import os
 
 class TestSettings:
-    def __init__(self, name, desc, values=[], settings=None):
+    def __init__(self, name, desc, settings=[]):
         self.name = name
         self.desc = desc
-        self.values = values
+        self.settings = settings
         self.runnum = 0
 
     def run(self):
-        for i, val in enumerate(self.values):
+        for val in self.settings:
             print self.desc
             print "Run number =", self.runnum
-            print "%s: %s" % (self.name, val[i])
-            #makeMS(runnum="%03d" % self.runnum, **val[i])
-            print "makeMS(runnum=%03d, %s) % (self.runnum, val[i])
+            print "%s: %s" % (self.name, val)
+            makeMS(runnum="%03d" % self.runnum, **val)
             self.runnum += 1
 
         os.system('rm -rf %s' % self.name)
@@ -46,12 +45,13 @@ available_tests = [
         settings=[{'ell_u': val} for val in linspace(1.0,1.05,6)]),
     TestSettings(
         name='offset_u', desc='Pointing Offset',
-        settings=[{'ell_u': val} for val in linspace(0,2.0,10)]),
-    )
+        settings=[{'offset_u': val} for val in linspace(0,2.0,10)]),
     TestSettings(
-        name='rot_eccentricity', desc='Rotation & Eccentricity',
-        settings=[{'ell_u': ell_u, 'theta': theta} for ell_u, theta in zip(linspace(0,2.0,10)]), [1.00, 1.01, 1.02, 1.03, 1.04, 1.05])
-    )
+        name='point_eccentricity', desc='Pointing Offset & Eccentricity',
+        settings=[{'offset_u': offset_u, 'ell_u': ell_u} 
+            for offset_u, ell_u in zip(
+                    linspace(0,2.0,10), 
+                    [1.00, 1.01, 1.02, 1.03, 1.04, 1.05])])
 ]
 
 def run_test(requested_tests=[]):
@@ -59,21 +59,3 @@ def run_test(requested_tests=[]):
         if not requested_tests or test.name in requested_tests:
             test.run()
 
-'''
-def run_test(runnum=0):
-
-        for i in linspace(0,45,6):
-            eccen = [1.00, 1.01, 1.02, 1.03, 1.04, 1.05]
-            print "Rotated + Eccentricity"
-            print "Run Number = ", runnum
-            theta = i
-            ell_u = eccen[runnum]
-            print "rotation angle = "+ str(i)
-            print "eccentricity = "+ str(ell_u)
-            makeMS(runnum,noise=False,ell_u=ell_u,theta=theta)
-            runnum += 1
-
-        os.system('rm -rf rot_eccentricity')
-        os.system('mkdir rot_eccentricity')
-        os.system('mv Data* rot_eccentricity')
-'''
