@@ -39,7 +39,7 @@ available_tests = [
         settings=[{'supports': False}]),
     TestSettings(
         name='rotate', desc='Rotation Angle',
-        settings=[{'rotate': val} for val in linspace(0,90,19)]),
+        settings=[{'rotate': val} for val in linspace(0,45,10)]),
     TestSettings(
         name='ell_u', desc='Eccentricity',
         settings=[{'ell_u': val} for val in linspace(1.0,1.05,6)]),
