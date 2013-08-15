@@ -83,7 +83,7 @@ class Test:
         os.system('mv Data* %s' % self.name)
 
     def plot(self):
-        for level in ['centered', 'half-power,' 'low-power']:
+        for level in ['centered', 'half-power', 'low-power']:
             if callable(self.xtransform):
                 xfrm = self.xtransform
             elif self.xtransform:
