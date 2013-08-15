@@ -87,9 +87,9 @@ class Test:
             if callable(self.xtransform):
                 xfrm = self.xtransform
             elif self.xtransform:
-                xfrm = lambda x: x
-            else:
                 xfrm = lambda x: x*self.xtransform
+            else:
+                xfrm = lambda x: x
             x_axis = [xfrm(each[self.xaxis]) for each in self.settings]
             if len(x_axis) < 2:
                 print "plotting of %s skipped" % self.name
@@ -161,7 +161,7 @@ available_tests = [
 ]
 
 def run_test(tests=[], run=True, plot=True):
-    assert run or (plot if self.axis else False)
+    assert run or plot
     for test in available_tests:
         if not tests or test.name in tests:
             if run:
