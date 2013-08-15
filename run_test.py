@@ -143,7 +143,7 @@ available_tests = [
         settings=[{'rotate': val} for val in linspace(0,45,10)],
         xlabel="Percent Increase in Semimajor Axis"),
     Test(
-        name='eccentricity', desc='Eccentricity', xaxis='ell_u', xtransform=lambda x: 10*(x-1),
+        name='eccentricity', desc='Eccentricity', xaxis='ell_u', xtransform=lambda x: 100*(x-1),
         settings=[{'ell_u': val} for val in linspace(1.0,1.05,6)],
         xlabel="Percent Increase in Semimajor Axis"),
     Test(
@@ -161,11 +161,10 @@ available_tests = [
 ]
 
 def run_test(tests=[], run=True, plot=True):
-    assert run or plot
+    assert run or (plot if self.axis else False)
     for test in available_tests:
         if not tests or test.name in tests:
             if run:
                 test.run()
             if plot:
                 test.plot()
-
