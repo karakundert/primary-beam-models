@@ -84,12 +84,12 @@ class Test:
 
     def plot(self):
         for level in ['centered', 'half-power,' 'low-power']:
-            if callable(self.transform):
+            if callable(self.xtransform):
                 xfrm = self.xtransform
-            elif self.transform:
+            elif self.xtransform:
                 xfrm = lambda x: x
             else:
-                xfrm = lambda x: x*self.transform
+                xfrm = lambda x: x*self.xtransform
             x_axis = [xfrm(each[self.xaxis]) for each in self.settings]
             if len(x_axis) < 2:
                 print "plotting of %s skipped" % self.name
