@@ -50,7 +50,7 @@ regex = (
 )
 pattern = re.compile(regex, re.IGNORECASE)
 
-class TestSettings:
+class Test:
     def __init__(self, name, desc, xaxis, settings=[], xlabel=''):
         self.name = name
         self.desc = desc
@@ -100,13 +100,13 @@ class TestSettings:
             print rmsValuesNear
             print rmsValuesOff
 
-            noise = 50.0
-            rotate = 45.0
-            eccentricity = 5.0
-            phase = 2.0
+            #noise = 50.0
+            #rotate = 45.0
+            #eccentricity = 5.0
+            #phase = 2.0
 
-            pb_diam = 6.8
-            phs_off = phase / pb_diam
+            #pb_diam = 6.8
+            #phs_off = phase / pb_diam
 
             x_axis = [each[self.xaxis] for each in self.settings]
             pl.clf()
@@ -119,27 +119,27 @@ class TestSettings:
             pl.savefig("%s-%s.png" % (self.name, level))
 
 available_tests = [
-    TestSettings(
+    Test(
         name='noise', desc='Noise', xaxis='noise',
         settings=[{'noise': val} for val in linspace(0.0,0.5,6)],
         xlabel="Percent Increase in Semimajor Axis"),
-    TestSettings(
+    Test(
         name='supports', desc='Support Beams On/Off', xaxis='supports',
         settings=[{'supports': False}],
         xlabel="Percent Increase in Semimajor Axis"),
-    TestSettings(
+    Test(
         name='rotate', desc='Rotation Angle', xaxis='rotate',
         settings=[{'rotate': val} for val in linspace(0,45,10)],
         xlabel="Percent Increase in Semimajor Axis"),
-    TestSettings(
+    Test(
         name='eccentricity', desc='Eccentricity', xaxis='ell_u',
         settings=[{'ell_u': val} for val in linspace(1.0,1.05,6)],
         xlabel="Percent Increase in Semimajor Axis"),
-    TestSettings(
+    Test(
         name='pointing', desc='Pointing Offset', xaxis='offset_u',
         settings=[{'offset_u': val} for val in linspace(0,2.0,10)],
         xlabel="Percent Increase in Semimajor Axis"),
-    TestSettings(
+    Test(
         name='point_eccentricity', desc='Pointing Offset & Eccentricity',
         xaxis='offset_u',
         settings=[{'offset_u': offset_u, 'ell_u': ell_u} 
