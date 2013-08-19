@@ -1,7 +1,7 @@
 from glob import glob
 from matplotlib import axes
 # choose the comparable data set
-filenames = glob('eccentricity/Data*-low-power')
+filenames = glob('noise/Data*-low-power')
 
 import re
 numRegex = r"[+-]?([0-9]+\.)?[0-9]+([eE][+-][0-9]+)?"
@@ -65,18 +65,18 @@ print rmsValuesNear
 print rmsValuesOff
 
 noise = 50.0
-rotate = 45.0
+rotate = 90.0
 eccentricity = 5.0
 phase = 2.0
 
-pb_diam = 6.8
+pb_diam = 3.4
 phs_off = phase / pb_diam
 
-x_axis = linspace(0,eccentricity,len(filenames))
+x_axis = linspace(0,noise,len(filenames))
 pl.clf()
-pl.title("RMS Levels in Eccentricity Simulation")
+pl.title("RMS Levels in Noise Simulation")
 p1 = pl.plot(x_axis,rmsValues,'b')
 p2 = pl.plot(x_axis,rmsValuesNear,'g')
 p3 = pl.plot(x_axis,rmsValuesOff,'r')
-pl.xlabel("Percent Increase in Semimajor Axis")
+pl.xlabel("Percent Noise in Aperture")
 pl.legend([p1,p2,p3],["Whole Sky", "Near Source", "Off Source"], loc = 2)
