@@ -1,0 +1,7 @@
+#!/bin/bash
+
+rm -rf Data*-*
+rm -f *.log
+rm -f *.png
+rm -f immath.last
+rm -rf mysources*.cl
