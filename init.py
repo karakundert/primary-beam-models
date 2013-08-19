@@ -6,3 +6,9 @@ def rn():
 
 def pn():
     run_test(tests=['noise'], run=False, plot=True)
+
+def rp():
+    run_test(tests=['pointing'], run=True, plot=True)
+
+def pp():
+    run_test(tests=['pointing'], run=False, plot=True)

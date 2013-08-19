@@ -71,6 +71,9 @@ class Test:
         self.runnum = 0
 
     def run(self):
+        # calls makeMS function in simsky code to actually run the individual
+        # tests
+        # increments runnum to make tabulating data easy
         for val in self.settings:
             print self.desc
             print "Run number =", self.runnum
@@ -84,6 +87,8 @@ class Test:
 
     def plot(self):
         for level in ['centered', 'half-power', 'low-power']:
+            # gemerates plots for all sources for given test run
+            # code below specifies x-axis for plot
             if callable(self.xtransform):
                 xfrm = self.xtransform
             elif self.xtransform:
@@ -101,6 +106,7 @@ class Test:
             rmsValuesOff = []
 
             for filename in filenames:
+                # generates plots for all statistical locations
                 with open(filename+"/all_stats.txt") as f:
                     contents = f.read()
                     match = pattern.search(contents)
@@ -131,6 +137,7 @@ class Test:
             pl.savefig("%s-%s.png" % (self.name, level))
 
 available_tests = [
+    # list of tests possible to be executed
     Test(
         name='noise', desc='Noise', xaxis='noise', xtransform=100,
         settings=[{'noise': val} for val in linspace(0.0,0.5,6)],
@@ -161,6 +168,10 @@ available_tests = [
 ]
 
 def run_test(tests=[], run=True, plot=True):
+    # function that runs the tests and makes the plots, as defined by the
+    # function parameters
+    # specify which tests to run by filling tests list, or default to running
+    # all tests
     assert run or plot
     for test in available_tests:
         if not tests or test.name in tests:
