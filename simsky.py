@@ -16,7 +16,10 @@ import random
 
 def makeMS(runnum=0, noise=0.0, supports=True,
            offset_u = '0.0arcmin', offset_v = '0.0arcmin',
-           ell_u = 1.0, ell_v = 1.0, theta = 0.0):
+           ell_u = 1.0, ell_v = 1.0, theta = 0.0,
+           noise2=0.0, supports2=True,
+           offset_u2 = '0.0arcmin', offset_v2 = '0.0arcmin',
+           ell_u2 = 1.0, ell_v2 = 1.0, theta2 = 0.0):
 
 
   for i in xrange(3):
@@ -54,7 +57,9 @@ def makeMS(runnum=0, noise=0.0, supports=True,
                     imsize=imsize,cellsize=cellsize,
                     ra0=ra0, dec0=dec0, nchan=nchan, reffreq=reffreq,
                     noise=0.0, supports=True,offset_u='0.0arcmin',
-                    offset_v='0.0arcmin',ell_u=1.0,ell_v=1.0,theta=0.0);
+                    offset_v='0.0arcmin',ell_u=1.0,ell_v=1.0,theta=0.0,
+                    noise2=0.0, supports2=True,offset_u2='0.0arcmin',
+                    offset_v2='0.0arcmin',ell_u2=1.0,ell_v2=1.0,theta2=0.0);
       #predictTrueImage(msname=msname,ftm=ftm,imname=imname,
       #                 imsize=imsize,cellsize=cellsize,ra0=ra0, dec0=dec0,
       #                 nchan=nchan, reffreq=reffreq, model=True);
@@ -63,7 +68,9 @@ def makeMS(runnum=0, noise=0.0, supports=True,
                     imsize=imsize,cellsize=cellsize,
                     ra0=ra0, dec0=dec0, nchan=nchan, reffreq=reffreq,
                     noise=noise, supports=supports,offset_u=offset_u,
-                    offset_v=offset_v,ell_u=ell_u,ell_v=ell_v,theta=theta,area=area1);
+                    offset_v=offset_v,ell_u=ell_u,ell_v=ell_v,theta=theta,
+                    noise2=noise2, supports2=supports2,offset_u2=offset_u2,
+                    offset_v2=offset_v2,ell_u2=ell_u2,ell_v2=ell_v2,theta2=theta2,area=area1);
       predictTrueImage(msname=msname,ftm=ftm,imname=imname,
                        imsize=imsize,cellsize=cellsize,ra0=ra0, dec0=dec0,
                        nchan=nchan, reffreq=reffreq, model=False);
@@ -163,11 +170,11 @@ def imageFromArray(arr,outfile,linear=F):
 
 ###############################################
 
-def makePrimaryBeam(image="model",imsize=256,cellsize='8.0arcsec',
+def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
                     reffreq='1.5GHz', noise = 0.0, supports=True,
                     offset_u='0.0arcmin', offset_v='0.0arcmin',
                     ell_u = 1.0, ell_v = 1.0,
-                    theta = 0.0, area = -1):
+                    theta = 0.0):
 
         # noise == True: there is Gaussian noise in the aperture function
         # supports == True: there are shadows from the support beams
@@ -265,9 +272,35 @@ def makePrimaryBeam(image="model",imsize=256,cellsize='8.0arcsec',
         #pl.subplot(122)
         #pl.imshow(real(phs_aper))
         #pl.colorbar()
+
+        return phs_aper, Nxy
+
+###############################################
+
+def makePrimaryBeam(image="model",imsize=256,cellsize='8.0arcsec',
+                    reffreq='1.5GHz', noise = 0.0, supports=True,
+                    offset_u='0.0arcmin', offset_v='0.0arcmin',
+                    ell_u = 1.0, ell_v = 1.0,
+                    theta = 0.0,
+                    noise2=0.0, supports2=True,
+                    offset_u2='0.0arcmin', offset_v2='0.0arcmin',
+                    ell_u2=1.0, ell_v2=1.0,
+                    theta2=0.0, area = -1):
+
+        # Make apertures
+        aper1,Nxy = makeAperture(image=image,imsize=imsize,cellsize=cellsize,
+                    reffreq=reffreq, noise=noise, supports=supports,
+                    offset_u=offset_u, offset_v=offset_v,
+                    ell_u=ell_u, ell_v=ell_v,
+                    theta=theta)
+        aper2,Nxy2 = makeAperture(image=image,imsize=imsize,cellsize=cellsize,
+                    reffreq=reffreq, noise=noise2, supports=supports2,
+                    offset_u=offset_u2, offset_v=offset_v2,
+                    ell_u=ell_u2, ell_v=ell_v2,
+                    theta=theta2)
         
-        # Aperture autocorrelation
-        auto_corr = signal.fftconvolve(phs_aper, phs_aper, 'same')
+        # Aperture convolution to form baseline aperture
+        auto_corr = signal.fftconvolve(aper1, aper2, 'same')
         aper_area = auto_corr.sum()
         print aper_area
         print area
@@ -313,7 +346,10 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],msname='',
                    ra0='', dec0='', nchan=1, reffreq='1.5GHz',
                    noise=0.0, supports=True,
                    offset_u = '0.0arcmin', offset_v = '0.0arcmin',
-                   ell_u = 1.0, ell_v = 1.0, theta = 0.0, area=-1):
+                   ell_u = 1.0, ell_v = 1.0, theta = 0.0,
+                   noise2=0.0, supports2=True,
+                   offset_u2 = '0.0arcmin', offset_v2 = '0.0arcmin',
+                   ell_u2 = 1.0, ell_v2 = 1.0, theta2 = 0.0, area=-1):
 
     # noise == True: there is Gaussian noise in the aperture function
     # supports == True: there are shadows from the support beams
@@ -336,8 +372,16 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],msname='',
   ia.modify(model=cl.torecord(),subtract=False);
   cl.close();
   vals = ia.getchunk();
-  pb,aper_area = makePrimaryBeam(image,imsize,cellsize,reffreq, noise,
-          supports, offset_u, offset_v, ell_u, ell_v, theta, area);
+  pb,aper_area = makePrimaryBeam(image=image,imsize=imsize,
+                    cellsize=cellsize, reffreq=reffreq,
+                    noise=noise, supports=supports,
+                    offset_u=offset_u, offset_v=offset_v,
+                    ell_u = ell_u, ell_v = ell_v,
+                    theta = theta,
+                    noise2=noise2, supports2=supports2,
+                    offset_u2=offset_u2, offset_v2=offset_v2,
+                    ell_u2=ell_u2, ell_v2=ell_v2,
+                    theta2=theta2, area = area);
   vals[:,:,0,0] = vals[:,:,0,0] * real(pb[:,:]);
   ia.putchunk(vals);
   ia.close();
