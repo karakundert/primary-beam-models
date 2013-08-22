@@ -15,8 +15,8 @@ import random
 ###############################################
 
 def makeMS(runnum=0, noise=0.0, supports=True,
-           offset_u = '0.0arcmin', offset_v = '0.0arcmin',
-           ell_u = 1.0, ell_v = 1.0, theta = 0.0):
+           ell_u = 1.0, ell_v = 1.0,
+           pointing = False, theta = 0.0):
 
 
   for i in xrange(3):
@@ -57,13 +57,13 @@ def makeMS(runnum=0, noise=0.0, supports=True,
       aper_list = []
       Nxy_list = []
       for i in xrange(28):
-          print "aper"+str(i)
-          image = apname+"/aper"+str(i)
+          print "aper" % str(i)
+          image = apname+"/aper%02d" % i
           aper,Nxy = makeAperture(image=image,imsize=imsize,
                   cellsize=cellsize,reffreq=reffreq,
                   noise=noise,supports=supports,
-                  offset_u=offset_u,offset_v=offset_v,
-                  ell_u=ell_u,ell_v=ell_v,theta=theta)
+                  ell_u=ell_u,ell_v=ell_v,
+                  pointing=pointing,theta=theta)
           aper_list.append(aper)
           Nxy_list.append(Nxy)
       area_list = []
@@ -71,7 +71,7 @@ def makeMS(runnum=0, noise=0.0, supports=True,
       for i in xrange(28):
           for j in xrange(28):
               if i < j:
-                  pbimage = pbname+"/pb"+str(i)+"&&"+str(j)
+                  pbimage = pbname+"/pb%02d&&%02d" % (i,j)
                   print "primary beam"+str(i)+"&&"+str(j)
                   pb,area = makeTrueImage(stokesvals=stokesvals,msname=msname,
                                 imname=imname,pbname=pbimage,
@@ -185,9 +185,8 @@ def imageFromArray(arr,outfile,linear=F):
 
 def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
                     reffreq='1.5GHz', noise = 0.0, supports=True,
-                    offset_u='0.0arcmin', offset_v='0.0arcmin',
                     ell_u = 1.0, ell_v = 1.0,
-                    theta = 0.0):
+                    pointing = True, theta = 0.0):
 
         # noise == True: there is Gaussian noise in the aperture function
         # supports == True: there are shadows from the support beams
@@ -260,6 +259,12 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
         imageFromArray(aper,image)
         
         # Add phase ramp to aperture function
+        if pointing == True:
+            offset_u = str(2 * random.random())+'arcmin'
+            offset_v = str(2 * random.random())+'arcmin'
+        else:
+            offset_u = '0.0arcmin'
+            offset_v = '0.0arcmin'
         phs_off_u = qa.quantity(offset_u)['value']
         phs_off_v = qa.quantity(offset_v)['value']
         shift_u = phs_off_u # in arcmins

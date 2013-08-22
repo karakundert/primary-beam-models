@@ -12,25 +12,17 @@ The CASA package must be installed in order to be able to run this simulation.
 
 To run the simulation, type these commands into the CASA terminal.
 
-    execfile('makesources.py')
-    execfile('simsky.py')
-    execfile('run_test.py')
-    run_test()
+    execfile('init.py')
+    run()
 
 You may want to choose tests to run individually, as opposed to running all
-tests together. The simulation takes several hours to run with all tests.
+tests together. The simulation takes several hours to run with all tests. To do
+so, look at the source code for run_test.py and choose the tests desired.
 
 Plotting the Results
 ====================
 
-By using the plot_data script, you can see the effects that these
-perturbations have on the primary beam, and the data we collect. 
-
-To run the data plotting script, type these commands into the CASA terminal.
-
-    execfile('plot_data.py')
-
-Be careful with how the run numbers combine in an individual test. If you
-plot a group of points that spans from Data8-Data13, the plotting script will
-place Data 10-13 on the plot before Data 8-9, making it difficult to see
-trends.
+Using the run_test() command, plots depicting trends of perturbations will
+automatically be generated. However, it is possible - if one simply wants to
+make plots on preexisting data sets. Look at the init.py source code to find
+the necessary commands for plotting the right data sets.

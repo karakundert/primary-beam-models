@@ -141,30 +141,28 @@ available_tests = [
     Test(
         name='noise', desc='Noise', xaxis='noise', xtransform=100,
         settings=[{'noise': val} for val in linspace(0.0,0.5,6)],
-        xlabel="Percent Increase in Semimajor Axis"),
+        xlabel="Percent Noise Across Aperture"),
     Test(
         name='supports', desc='Support Beams On/Off',
         settings=[{'supports': False}]),
     Test(
         name='rotate', desc='Rotation Angle', xaxis='rotate',
         settings=[{'rotate': val} for val in linspace(0,45,10)],
-        xlabel="Percent Increase in Semimajor Axis"),
+        xlabel="Degree of Beam Rotation"),
     Test(
         name='eccentricity', desc='Eccentricity', xaxis='ell_u', xtransform=lambda x: 100*(x-1),
         settings=[{'ell_u': val} for val in linspace(1.0,1.05,6)],
         xlabel="Percent Increase in Semimajor Axis"),
     Test(
         name='pointing', desc='Pointing Offset', xaxis='offset_u', xtransform=1/6.8,
-        settings=[{'offset_u': val} for val in linspace(0,2.0,10)],
-        xlabel="Percent Increase in Semimajor Axis"),
+        settings=[{'pointing': True, 'pointing': False}]),
     Test(
         name='point_eccentricity', desc='Pointing Offset & Eccentricity',
         xaxis='offset_u',
-        settings=[{'offset_u': offset_u, 'ell_u': ell_u} 
+        settings=[{'offset_u': offset_u, 'ell_u': ell_u}
             for offset_u, ell_u in zip(
-                    linspace(0,2.0,10), 
-                    [1.00, 1.01, 1.02, 1.03, 1.04, 1.05])],
-        xlabel="Percent Increase in Semimajor Axis")
+                    [True, False],
+                    [1.00, 1.01, 1.02, 1.03, 1.04, 1.05])])
 ]
 
 def run_test(tests=[], run=True, plot=True):
