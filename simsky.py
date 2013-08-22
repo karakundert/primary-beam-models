@@ -16,10 +16,7 @@ import random
 
 def makeMS(runnum=0, noise=0.0, supports=True,
            offset_u = '0.0arcmin', offset_v = '0.0arcmin',
-           ell_u = 1.0, ell_v = 1.0, theta = 0.0,
-           noise2=0.0, supports2=True,
-           offset_u2 = '0.0arcmin', offset_v2 = '0.0arcmin',
-           ell_u2 = 1.0, ell_v2 = 1.0, theta2 = 0.0):
+           ell_u = 1.0, ell_v = 1.0, theta = 0.0):
 
 
   for i in xrange(3):
@@ -34,7 +31,8 @@ def makeMS(runnum=0, noise=0.0, supports=True,
       msname = basename + '.ms';
       imname = basename+'.true.im';
       resname = dirname+"/pb-residuals-"+str(runnum)
-      pbname = dirname+"/primary-beam"
+      pbname = dirname+"/primary-beams"
+      apname = dirname+"/apertures"
       clname = "mysources"
       ra0="19:59:28.500";
       dec0="+40.44.01.50";
@@ -51,32 +49,47 @@ def makeMS(runnum=0, noise=0.0, supports=True,
 
       clname = clname+str(i)+'.cl'
       makeMSFrame(dirname=dirname,msname=msname,ra0=ra0,dec0=dec0,nchan=nchan);
+
+      os.system('mkdir '+apname)
+      os.system('mkdir '+pbname)
+
       addNoise(msname);
-      pb1,area1 = makeTrueImage(stokesvals=stokesvals,msname=msname,imname=imname,
-                    pbname=pbname+"-model",clname=clname,image=dirname+"/model",
-                    imsize=imsize,cellsize=cellsize,
-                    ra0=ra0, dec0=dec0, nchan=nchan, reffreq=reffreq,
-                    noise=0.0, supports=True,offset_u='0.0arcmin',
-                    offset_v='0.0arcmin',ell_u=1.0,ell_v=1.0,theta=0.0,
-                    noise2=0.0, supports2=True,offset_u2='0.0arcmin',
-                    offset_v2='0.0arcmin',ell_u2=1.0,ell_v2=1.0,theta2=0.0);
-      #predictTrueImage(msname=msname,ftm=ftm,imname=imname,
-      #                 imsize=imsize,cellsize=cellsize,ra0=ra0, dec0=dec0,
-      #                 nchan=nchan, reffreq=reffreq, model=True);
-      pb2,area2 = makeTrueImage(stokesvals=stokesvals,msname=msname,imname=imname,
-                    pbname=pbname+"-perturbed",clname=clname,image=dirname+"/perturbed",
-                    imsize=imsize,cellsize=cellsize,
-                    ra0=ra0, dec0=dec0, nchan=nchan, reffreq=reffreq,
-                    noise=noise, supports=supports,offset_u=offset_u,
-                    offset_v=offset_v,ell_u=ell_u,ell_v=ell_v,theta=theta,
-                    noise2=noise2, supports2=supports2,offset_u2=offset_u2,
-                    offset_v2=offset_v2,ell_u2=ell_u2,ell_v2=ell_v2,theta2=theta2,area=area1);
+      aper_list = []
+      Nxy_list = []
+      for i in xrange(28):
+          print "aper"+str(i)
+          image = apname+"/aper"+str(i)
+          aper,Nxy = makeAperture(image=image,imsize=imsize,
+                  cellsize=cellsize,reffreq=reffreq,
+                  noise=noise,supports=supports,
+                  offset_u=offset_u,offset_v=offset_v,
+                  ell_u=ell_u,ell_v=ell_v,theta=theta)
+          aper_list.append(aper)
+          Nxy_list.append(Nxy)
+      area_list = []
+      pb_list = []
+      for i in xrange(28):
+          for j in xrange(28):
+              if i < j:
+                  pbimage = pbname+"/pb"+str(i)+"&&"+str(j)
+                  print "primary beam"+str(i)+"&&"+str(j)
+                  pb,area = makeTrueImage(stokesvals=stokesvals,msname=msname,
+                                imname=imname,pbname=pbimage,
+                                clname=clname,imsize=imsize,cellsize=cellsize,
+                                ra0=ra0,dec0=dec0,nchan=nchan,reffreq=reffreq,
+                                aper1=aper_list[i],aper2=aper_list[j],
+                                Nxy=Nxy_list[i]);
+                  pb_list.append(pb)
+                  area_list.append(area)
+              else:
+                  continue
+
       predictTrueImage(msname=msname,ftm=ftm,imname=imname,
                        imsize=imsize,cellsize=cellsize,ra0=ra0, dec0=dec0,
                        nchan=nchan, reffreq=reffreq, model=False);
       #makeResidualImage(msname,resname,imsize,cellsize,ra0, dec0, nchan, reffreq);
-      immath(imagename=[dirname+"/primary-beam-model", dirname+"/primary-beam-perturbed"],
-              expr='(IM0-IM1)',outfile=dirname+"/pbdiff.im")
+      #immath(imagename=[dirname+"/primary-beam-model", dirname+"/primary-beam-perturbed"],
+      #        expr='(IM0-IM1)',outfile=dirname+"/pbdiff.im")
       clname = 'mysources'
 
       # The sources are located in one quadrant of the sky, and therefore one
@@ -277,28 +290,10 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
 
 ###############################################
 
-def makePrimaryBeam(image="model",imsize=256,cellsize='8.0arcsec',
-                    reffreq='1.5GHz', noise = 0.0, supports=True,
-                    offset_u='0.0arcmin', offset_v='0.0arcmin',
-                    ell_u = 1.0, ell_v = 1.0,
-                    theta = 0.0,
-                    noise2=0.0, supports2=True,
-                    offset_u2='0.0arcmin', offset_v2='0.0arcmin',
-                    ell_u2=1.0, ell_v2=1.0,
-                    theta2=0.0, area = -1):
+def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',
+                    reffreq='1.5GHz', aper1 = (), aper2 = (),
+                    Nxy = 200, area = -1):
 
-        # Make apertures
-        aper1,Nxy = makeAperture(image=image,imsize=imsize,cellsize=cellsize,
-                    reffreq=reffreq, noise=noise, supports=supports,
-                    offset_u=offset_u, offset_v=offset_v,
-                    ell_u=ell_u, ell_v=ell_v,
-                    theta=theta)
-        aper2,Nxy2 = makeAperture(image=image,imsize=imsize,cellsize=cellsize,
-                    reffreq=reffreq, noise=noise2, supports=supports2,
-                    offset_u=offset_u2, offset_v=offset_v2,
-                    ell_u=ell_u2, ell_v=ell_v2,
-                    theta=theta2)
-        
         # Aperture convolution to form baseline aperture
         auto_corr = signal.fftconvolve(aper1, aper2, 'same')
         aper_area = auto_corr.sum()
@@ -344,12 +339,7 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],msname='',
                    imname='',pbname='',clname='mysources.cl',
                    image="model",imsize=256,cellsize='8.0arcsec',
                    ra0='', dec0='', nchan=1, reffreq='1.5GHz',
-                   noise=0.0, supports=True,
-                   offset_u = '0.0arcmin', offset_v = '0.0arcmin',
-                   ell_u = 1.0, ell_v = 1.0, theta = 0.0,
-                   noise2=0.0, supports2=True,
-                   offset_u2 = '0.0arcmin', offset_v2 = '0.0arcmin',
-                   ell_u2 = 1.0, ell_v2 = 1.0, theta2 = 0.0, area=-1):
+                   aper1 = [], aper2 = [], Nxy = 200, area = -1):
 
     # noise == True: there is Gaussian noise in the aperture function
     # supports == True: there are shadows from the support beams
@@ -372,16 +362,10 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],msname='',
   ia.modify(model=cl.torecord(),subtract=False);
   cl.close();
   vals = ia.getchunk();
-  pb,aper_area = makePrimaryBeam(image=image,imsize=imsize,
-                    cellsize=cellsize, reffreq=reffreq,
-                    noise=noise, supports=supports,
-                    offset_u=offset_u, offset_v=offset_v,
-                    ell_u = ell_u, ell_v = ell_v,
-                    theta = theta,
-                    noise2=noise2, supports2=supports2,
-                    offset_u2=offset_u2, offset_v2=offset_v2,
-                    ell_u2=ell_u2, ell_v2=ell_v2,
-                    theta2=theta2, area = area);
+  pb,aper_area = makePrimaryBeam(imsize=imsize,
+                    cellsize=cellsize,reffreq=reffreq,
+                    aper1=aper1,aper2=aper2,
+                    Nxy=Nxy,area=area)
   vals[:,:,0,0] = vals[:,:,0,0] * real(pb[:,:]);
   ia.putchunk(vals);
   ia.close();
@@ -419,40 +403,40 @@ def predictTrueImage(msname='', ftm='ft',imname='',imsize=256,
                                  nchan=1, reffreq='1.5GHz', model = True):
   ### Predicting
   antlist = xrange(1,28,1)
-  im.open(msname,usescratch=True);
   for i in antlist:
       for j in antlist:
-          if i!=j:
+          if i<j:
+              im.open(msname,usescratch=True);
               pair = '%d&&%d' % (i, j)
               print pair
               im.selectvis(baseline=pair,nchan=nchan,start=0,step=1);
+              im.defineimage(nx=imsize,ny=imsize,cellx=cellsize,celly=cellsize,
+                             stokes='IQUV',spw=[0],
+                             phasecenter=me.direction(rf='J2000',v0=ra0,v1=dec0),
+                             mode='channel',nchan=nchan,start=0,step=1,
+                             restfreq=reffreq);
+              if(ftm=="awp"):
+                 im.setoptions(cache=imsize*imsize*6*nchan,ftmachine=ftm,
+                               applypointingoffsets=False,
+                               dopbgriddingcorrections=False,
+                               cfcachedirname=imname+".cfcache",
+                               pastep=360.0,pblimit=0.001);
+              else:
+                 im.setoptions(ftmachine="ft");
+              #im.setvp(dovp=True,usedefaultvp=True,telescope='EVLA');
+              im.ft(model=imname,incremental=False);
+              im.close();
           else:
               continue
-  im.defineimage(nx=imsize,ny=imsize,cellx=cellsize,celly=cellsize,
-                 stokes='IQUV',spw=[0],
-                 phasecenter=me.direction(rf='J2000',v0=ra0,v1=dec0),
-                 mode='channel',nchan=nchan,start=0,step=1,
-                 restfreq=reffreq);
-  if(ftm=="awp"):
-     im.setoptions(cache=imsize*imsize*6*nchan,ftmachine=ftm,
-                   applypointingoffsets=False,
-                   dopbgriddingcorrections=False,
-                   cfcachedirname=imname+".cfcache",
-                   pastep=360.0,pblimit=0.001);
-  else:
-     im.setoptions(ftmachine="ft");
-  #im.setvp(dovp=True,usedefaultvp=True,telescope='EVLA');
-  im.ft(model=imname,incremental=False);
-  im.close();
 
   ### Copy to the data and corrected-data columns
   tb.open(msname,nomodify=False);
   moddata = tb.getcol(columnname='MODEL_DATA');
-  if model == True:
-      tb.putcol(columnname='DATA',value=moddata);
-      tb.putcol(columnname='CORRECTED_DATA',value=moddata);
-      moddata.fill(0.0);
-      tb.putcol(columnname='MODEL_DATA',value=moddata);
+  #if model == True:
+  tb.putcol(columnname='DATA',value=moddata);
+  tb.putcol(columnname='CORRECTED_DATA',value=moddata);
+  moddata.fill(0.0);
+  tb.putcol(columnname='MODEL_DATA',value=moddata);
   tb.close();
 
 #####################################
