@@ -60,10 +60,10 @@ def makeMS(runnum=0, noise=0.0, supports=True,
           print "aper" % str(i)
           image = apname+"/aper%02d" % i
           aper,Nxy = makeAperture(image=image,imsize=imsize,
-                  cellsize=cellsize,reffreq=reffreq,
-                  noise=noise,supports=supports,
-                  ell_u=ell_u,ell_v=ell_v,
-                  pointing=pointing,theta=theta)
+                          cellsize=cellsize,reffreq=reffreq,
+                          noise=noise,supports=supports,
+                          ell_u=ell_u,ell_v=ell_v,
+                          pointing=pointing,theta=theta)
           aper_list.append(aper)
           Nxy_list.append(Nxy)
       area_list = []
