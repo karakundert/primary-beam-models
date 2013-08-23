@@ -57,7 +57,7 @@ def makeMS(runnum=0, noise=0.0, supports=True,
       aper_list = []
       Nxy_list = []
       for i in xrange(28):
-          print "aper" % str(i)
+          print "aper" + str(i)
           image = apname+"/aper%02d" % i
           aper,Nxy = makeAperture(image=image,imsize=imsize,
                           cellsize=cellsize,reffreq=reffreq,
@@ -253,9 +253,6 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
 
         aper=ndimage.rotate(input=aper1,angle=theta,reshape=False)
 
-        pl.figure(1)
-        pl.clf()
-        pl.imshow(aper)
         imageFromArray(aper,image)
         
         # Add phase ramp to aperture function
@@ -282,15 +279,6 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
 
         phs_aper = aper * phs
 
-        #pl.figure(4)
-        #pl.clf()
-        #pl.subplot(121)
-        #pl.imshow(imag(phs_aper))
-        #pl.colorbar()
-        #pl.subplot(122)
-        #pl.imshow(real(phs_aper))
-        #pl.colorbar()
-
         return phs_aper, Nxy
 
 ###############################################
@@ -300,27 +288,22 @@ def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',
                     Nxy = 200, area = -1):
 
         # Aperture convolution to form baseline aperture
-        auto_corr = signal.fftconvolve(aper1, aper2, 'same')
-        aper_area = auto_corr.sum()
-        print aper_area
-        print area
-        if area != -1:
-            auto_corr = auto_corr / area
-        else:
-            auto_corr = auto_corr / aper_area
+        #auto_corr = signal.fftconvolve(aper1, aper2, 'same')
+        #aper_area = auto_corr.sum()
+        #print aper_area
+        #print area
+        #if area != -1:
+        #    auto_corr = auto_corr / area
+        #else:
+        #    auto_corr = auto_corr / aper_area
 
         # Power pattern function
-        power = (Nxy**2) * fftpack.ifft2(fftpack.fftshift(auto_corr))
-        power = fftpack.ifftshift(power)
+        volt1 = fftpack.ifft2(fftpack.fftshift(aper1))
+        volt2 = fftpack.ifft2(fftpack.fftshift(aper2))
+        power = (Nxy**2) * volt1 * volt2
+        power = fftpack.ifftshift(power) / power[Nxy/2][Nxy/2]
 
-        pl.figure(2)
-        pl.clf()
-        pl.imshow(real(power))
-        pl.colorbar()
-        #pl.figure(3)
-        #pl.clf()
-        #pl.imshow(imag(power))
-        #pl.colorbar()
+        aper_area = -1
         
         return power,aper_area
 
