@@ -19,7 +19,7 @@ def makeMS(runnum=0, noise=0.0, supports=True,
            pointing = False, theta = 0.0):
 
 
-  for i in xrange(3):
+  for i in xrange(1):
       dirname = "Data"+str(runnum)
       if i == 0:
           dirname = dirname+"-centered"
@@ -53,8 +53,7 @@ def makeMS(runnum=0, noise=0.0, supports=True,
       os.system('mkdir '+apname)
       os.system('mkdir '+pbname)
 
-      addNoise(msname);
-      aper_list = []
+      #addNoise(msname);
       Nxy_list = []
       for i in xrange(28):
           print "aper" + str(i)
@@ -64,25 +63,27 @@ def makeMS(runnum=0, noise=0.0, supports=True,
                           noise=noise,supports=supports,
                           ell_u=ell_u,ell_v=ell_v,
                           pointing=pointing,theta=theta)
-          aper_list.append(aper)
           Nxy_list.append(Nxy)
-      area_list = []
-      pb_list = []
       for i in xrange(28):
           for j in xrange(28):
               if i < j:
                   pbimage = pbname+"/pb%02d&&%02d" % (i,j)
                   print "primary beam"+str(i)+"&&"+str(j)
-                  pb,area = makeTrueImage(stokesvals=stokesvals,msname=msname,
-                                imname=imname,pbname=pbimage,
-                                clname=clname,imsize=imsize,cellsize=cellsize,
-                                ra0=ra0,dec0=dec0,nchan=nchan,reffreq=reffreq,
-                                aper1=aper_list[i],aper2=aper_list[j],
+                  pb,area = makePrimaryBeam(imsize=imsize,cellsize=cellsize,
+                                reffreq=reffreq,pbname=pbimage,
+                                aper1_real=apname+"/aper%02dreal" % i,
+                                aper1_imag=apname+"/aper%02dimag" % i,
+                                aper2_real=apname+"/aper%02dreal" % j,
+                                aper2_imag=apname+"/aper%02dimag" % j,
                                 Nxy=Nxy_list[i]);
-                  pb_list.append(pb)
-                  area_list.append(area)
               else:
                   continue
+      for i in xrange(len(Nxy_list)):
+          makeTrueImage(stokesvals=stokesvals,msname=msname,
+                        imname=imname,pbname=pbimage,
+                        clname=clname,imsize=imsize,cellsize=cellsize,
+                        ra0=ra0,dec0=dec0,nchan=nchan,reffreq=reffreq,
+                        pb = pbname+"/pb%02d&&%02d" % (i,j))
 
       predictTrueImage(msname=msname,ftm=ftm,imname=imname,
                        imsize=imsize,cellsize=cellsize,ra0=ra0, dec0=dec0,
@@ -99,16 +100,16 @@ def makeMS(runnum=0, noise=0.0, supports=True,
       # sources. If you change the image size (imsize), then you must change the
       # statistics regions to match.
 
-      ia.open(resname)
-      stats0 = ia.statistics(logfile=dirname+'/all_stats.txt')
-      qq = rg.box(blc=[1500,100,0,0],trc=[1600,200,0,0])
-      stats1 = ia.statistics(region=qq,logfile=dirname+'/off_source_stats.txt')
-      qq = rg.box(blc=[1030,1040,0,0],trc=[1050,1060,0,0])
-      stats2 = ia.statistics(region=qq,logfile=dirname+'/near_source_stats.txt')
-      ia.close()
+      #ia.open(resname)
+      #stats0 = ia.statistics(logfile=dirname+'/all_stats.txt')
+      #qq = rg.box(blc=[1500,100,0,0],trc=[1600,200,0,0])
+      #stats1 = ia.statistics(region=qq,logfile=dirname+'/off_source_stats.txt')
+      #qq = rg.box(blc=[1030,1040,0,0],trc=[1050,1060,0,0])
+      #stats2 = ia.statistics(region=qq,logfile=dirname+'/near_source_stats.txt')
+      #ia.close()
 
 
-  return [stats0,stats1,stats2]
+  ##return [stats0,stats1,stats2]
 
 ###############################################
 
@@ -229,7 +230,6 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
 
         # Aperture Function
         aper = zeros((Nuv,Nuv))
-        aper1 = zeros((Nuv,Nuv))
         d_uv = spat_lam / uvcell
         uu, vv = mgrid[:Nuv, :Nuv]
         circle = (ell_u * (uu - ((Nuv/2.0) - 0.5)) ** 2) + (ell_v * (vv -
@@ -243,17 +243,15 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
                         if supports == True:
                             # to get secondary reflector support beam shadows
                             if u == (Nuv/2) or v == (Nuv/2):
-                                aper1[u][v] = 0
+                                aper[u][v] = 0
                             elif u == (Nuv/2 - 1) or v == (Nuv/2 - 1):
-                                aper1[u][v] = 0
+                                aper[u][v] = 0
                             else:
-                                aper1[u][v] = 1.0 + random.gauss(0,noise);
+                                aper[u][v] = 1.0 + random.gauss(0,noise);
                         else:
-                            aper1[u][v] = 1.0 + random.gauss(0,noise);
+                            aper[u][v] = 1.0 + random.gauss(0,noise);
 
-        aper=ndimage.rotate(input=aper1,angle=theta,reshape=False)
-
-        imageFromArray(aper,image)
+        aper=ndimage.rotate(input=aper,angle=theta,reshape=False)
         
         # Add phase ramp to aperture function
         if pointing == True:
@@ -279,12 +277,17 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
 
         phs_aper = aper * phs
 
+        imageFromArray(real(phs_aper),image+"real")
+        imageFromArray(imag(phs_aper),image+"imag")
+
         return phs_aper, Nxy
 
 ###############################################
 
 def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',
-                    reffreq='1.5GHz', aper1 = (), aper2 = (),
+                    reffreq='1.5GHz', pbname = "model",
+                    aper1_real = "aper00real", aper1_imag = "aper00imag",
+                    aper2_real = "aper01real", aper2_imag = "aper01imag",
                     Nxy = 200, area = -1):
 
         # Aperture convolution to form baseline aperture
@@ -297,11 +300,35 @@ def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',
         #else:
         #    auto_corr = auto_corr / aper_area
 
+        # Combine aperture files to make complex aperture array
+        ia.open(aper1_real)
+        a1_real = ia.getchunk()
+        ia.close()
+
+        ia.open(aper1_imag)
+        a1_imag = ia.getchunk()
+        ia.close()
+
+        ia.open(aper2_real)
+        a2_real = ia.getchunk()
+        ia.close()
+
+        ia.open(aper2_imag)
+        a2_imag = ia.getchunk()
+        ia.close()
+
+        aper1 = a1_real + (sqrt(-1) * a1_imag)
+        aper2 = a2_real + (sqrt(-1) * a2_imag)
+
         # Power pattern function
         volt1 = fftpack.ifft2(fftpack.fftshift(aper1))
         volt2 = fftpack.ifft2(fftpack.fftshift(aper2))
         power = (Nxy**2) * volt1 * volt2
-        power = fftpack.ifftshift(power) / power[Nxy/2][Nxy/2]
+        power = fftpack.ifftshift(power)
+        power = power / power[Nxy/2][Nxy/2]
+
+        imageFromArray(real(power),pbname+"real")
+        imageFromArray(imag(power),pbname+"imag")
 
         aper_area = -1
         
@@ -327,7 +354,7 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],msname='',
                    imname='',pbname='',clname='mysources.cl',
                    image="model",imsize=256,cellsize='8.0arcsec',
                    ra0='', dec0='', nchan=1, reffreq='1.5GHz',
-                   aper1 = [], aper2 = [], Nxy = 200, area = -1):
+                   pb = [], area = -1):
 
     # noise == True: there is Gaussian noise in the aperture function
     # supports == True: there are shadows from the support beams
@@ -350,10 +377,6 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],msname='',
   ia.modify(model=cl.torecord(),subtract=False);
   cl.close();
   vals = ia.getchunk();
-  pb,aper_area = makePrimaryBeam(imsize=imsize,
-                    cellsize=cellsize,reffreq=reffreq,
-                    aper1=aper1,aper2=aper2,
-                    Nxy=Nxy,area=area)
   vals[:,:,0,0] = vals[:,:,0,0] * real(pb[:,:]);
   ia.putchunk(vals);
   ia.close();
@@ -380,9 +403,6 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],msname='',
   #vals = vals[:,:,0,0] * abs(pb[:,:]);
   #ia.putchunk(vals);
   #ia.close();
-
-  return pb,aper_area
-
 
 ###############################################
 
