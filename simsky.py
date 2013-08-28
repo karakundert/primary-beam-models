@@ -7,6 +7,7 @@ from scipy import *
 from scipy import fftpack
 from scipy import signal
 from numpy import fft
+from numpy import max
 from scipy import ndimage
 
 import matplotlib.pylab as pl
@@ -53,9 +54,11 @@ def makeMS(runnum=0, noise=0.0, supports=True,
       os.system('mkdir '+apname)
       os.system('mkdir '+pbname)
 
+      num_ant = 28
+
       #addNoise(msname);
       Nxy_list = []
-      for i in xrange(28):
+      for i in xrange(num_ant):
           print "aper" + str(i)
           image = apname+"/aper%02d" % i
           aper,Nxy = makeAperture(image=image,imsize=imsize,
@@ -64,8 +67,8 @@ def makeMS(runnum=0, noise=0.0, supports=True,
                           ell_u=ell_u,ell_v=ell_v,
                           pointing=pointing,theta=theta)
           Nxy_list.append(Nxy)
-      for i in xrange(28):
-          for j in xrange(28):
+      for i in xrange(num_ant):
+          for j in xrange(num_ant):
               if i < j:
                   pbimage = pbname+"/pb%02d&&%02d" % (i,j)
                   print "primary beam"+str(i)+"&&"+str(j)
@@ -78,16 +81,27 @@ def makeMS(runnum=0, noise=0.0, supports=True,
                                 Nxy=Nxy_list[i]);
               else:
                   continue
-      for i in xrange(len(Nxy_list)):
-          makeTrueImage(stokesvals=stokesvals,msname=msname,
-                        imname=imname,pbname=pbimage,
-                        clname=clname,imsize=imsize,cellsize=cellsize,
-                        ra0=ra0,dec0=dec0,nchan=nchan,reffreq=reffreq,
-                        pb = pbname+"/pb%02d&&%02d" % (i,j))
+      for i in xrange(num_ant):
+          for j in xrange(num_ant):
+              if i < j:
+                  pair = "%02d&&%02d" % (i,j)
+                  pbimage = pbname+"/pb%02d&&%02d" % (i,j)
+                  pbreal = pbname+"/pb%02d&&%02dreal" % (i,j)
+                  pbimag = pbname+"/pb%02d&&%02dimag" % (i,j)
+                  makeTrueImage(stokesvals=stokesvals,msname=msname,
+                                imname=imname,pbname=pbimage,
+                                clname=clname,imsize=imsize,cellsize=cellsize,
+                                ra0=ra0,dec0=dec0,nchan=nchan,reffreq=reffreq,
+                                pb_real_file = pbreal,
+                                pb_imag_file = pbimag)
+                  predictTrueImage(msname=msname,ftm=ftm,imname=imname,
+                           imsize=imsize,cellsize=cellsize,ra0=ra0, dec0=dec0,
+                           nchan=nchan, reffreq=reffreq, num_ant=num_ant,
+                           pair=pair, model=False);
+              else:
+                  continue
 
-      predictTrueImage(msname=msname,ftm=ftm,imname=imname,
-                       imsize=imsize,cellsize=cellsize,ra0=ra0, dec0=dec0,
-                       nchan=nchan, reffreq=reffreq, model=False);
+      makeDataTable(msname=msname)
       #makeResidualImage(msname,resname,imsize,cellsize,ra0, dec0, nchan, reffreq);
       #immath(imagename=[dirname+"/primary-beam-model", dirname+"/primary-beam-perturbed"],
       #        expr='(IM0-IM1)',outfile=dirname+"/pbdiff.im")
@@ -291,14 +305,6 @@ def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',
                     Nxy = 200, area = -1):
 
         # Aperture convolution to form baseline aperture
-        #auto_corr = signal.fftconvolve(aper1, aper2, 'same')
-        #aper_area = auto_corr.sum()
-        #print aper_area
-        #print area
-        #if area != -1:
-        #    auto_corr = auto_corr / area
-        #else:
-        #    auto_corr = auto_corr / aper_area
 
         # Combine aperture files to make complex aperture array
         ia.open(aper1_real)
@@ -319,13 +325,16 @@ def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',
 
         aper1 = a1_real + (sqrt(-1) * a1_imag)
         aper2 = a2_real + (sqrt(-1) * a2_imag)
+        auto_corr = signal.fftconvolve(aper1, aper2, 'same')
+        aper_area = auto_corr.sum()
+        #auto_corr = auto_corr / aper_area
 
         # Power pattern function
-        volt1 = fftpack.ifft2(fftpack.fftshift(aper1))
-        volt2 = fftpack.ifft2(fftpack.fftshift(aper2))
-        power = (Nxy**2) * volt1 * volt2
+        #volt1 = fftpack.ifft2(fftpack.fftshift(aper1))
+        #volt2 = fftpack.ifft2(fftpack.fftshift(aper2))
+        power = (Nxy**2) * fftpack.ifft2(fftpack.fftshift(auto_corr))
         power = fftpack.ifftshift(power)
-        power = power / power[Nxy/2][Nxy/2]
+        power = power / max(power)
 
         imageFromArray(real(power),pbname+"real")
         imageFromArray(imag(power),pbname+"imag")
@@ -354,7 +363,8 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],msname='',
                    imname='',pbname='',clname='mysources.cl',
                    image="model",imsize=256,cellsize='8.0arcsec',
                    ra0='', dec0='', nchan=1, reffreq='1.5GHz',
-                   pb = [], area = -1):
+                   pb_real_file = "pb00&&01real", pb_imag_file = "pb00&&01imag",
+                   area = -1):
 
     # noise == True: there is Gaussian noise in the aperture function
     # supports == True: there are shadows from the support beams
@@ -371,6 +381,16 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],msname='',
   im.make(image=pbname)
   im.close();
 
+  ia.open(pb_real_file)
+  pb_real = ia.getchunk()
+  ia.close()
+
+  ia.open(pb_imag_file)
+  pb_imag = ia.getchunk()
+  ia.close()
+
+  pb = pb_real + (sqrt(-1) * pb_imag)
+
   # Fill in from the componentlist 
   cl.open(clname);
   ia.open(imname);
@@ -380,6 +400,7 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],msname='',
   vals[:,:,0,0] = vals[:,:,0,0] * real(pb[:,:]);
   ia.putchunk(vals);
   ia.close();
+  print vals[imsize/2,imsize/2,0,0]
 
   ia.open(pbname)
   vals = ia.getchunk()
@@ -408,35 +429,32 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],msname='',
 
 def predictTrueImage(msname='', ftm='ft',imname='',imsize=256,
                                  cellsize='8.0arcsec',ra0='', dec0='',
-                                 nchan=1, reffreq='1.5GHz', model = True):
+                                 nchan=1, reffreq='1.5GHz',
+                                 num_ant = 28, pair="00&&01",model = True):
   ### Predicting
-  antlist = xrange(1,28,1)
-  for i in antlist:
-      for j in antlist:
-          if i<j:
-              im.open(msname,usescratch=True);
-              pair = '%d&&%d' % (i, j)
-              print pair
-              im.selectvis(baseline=pair,nchan=nchan,start=0,step=1);
-              im.defineimage(nx=imsize,ny=imsize,cellx=cellsize,celly=cellsize,
-                             stokes='IQUV',spw=[0],
-                             phasecenter=me.direction(rf='J2000',v0=ra0,v1=dec0),
-                             mode='channel',nchan=nchan,start=0,step=1,
-                             restfreq=reffreq);
-              if(ftm=="awp"):
-                 im.setoptions(cache=imsize*imsize*6*nchan,ftmachine=ftm,
-                               applypointingoffsets=False,
-                               dopbgriddingcorrections=False,
-                               cfcachedirname=imname+".cfcache",
-                               pastep=360.0,pblimit=0.001);
-              else:
-                 im.setoptions(ftmachine="ft");
-              #im.setvp(dovp=True,usedefaultvp=True,telescope='EVLA');
-              im.ft(model=imname,incremental=False);
-              im.close();
-          else:
-              continue
+  im.open(msname,usescratch=True);
+  im.selectvis(baseline=pair,nchan=nchan,start=0,step=1);
+  im.defineimage(nx=imsize,ny=imsize,cellx=cellsize,celly=cellsize,
+                 stokes='IQUV',spw=[0],
+                 phasecenter=me.direction(rf='J2000',v0=ra0,v1=dec0),
+                 mode='channel',nchan=nchan,start=0,step=1,
+                 restfreq=reffreq);
+  if(ftm=="awp"):
+     im.setoptions(cache=imsize*imsize*6*nchan,ftmachine=ftm,
+                   applypointingoffsets=False,
+                   dopbgriddingcorrections=False,
+                   cfcachedirname=imname+".cfcache",
+                   pastep=360.0,pblimit=0.001);
+  else:
+     im.setoptions(ftmachine="ft");
+  #im.setvp(dovp=True,usedefaultvp=True,telescope='EVLA');
+  im.ft(model=imname,incremental=False);
+  im.done();
 
+#####################################
+
+def makeDataTable(msname=''):
+  
   ### Copy to the data and corrected-data columns
   tb.open(msname,nomodify=False);
   moddata = tb.getcol(columnname='MODEL_DATA');
