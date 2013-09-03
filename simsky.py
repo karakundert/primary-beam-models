@@ -15,7 +15,8 @@ import random
 
 ###############################################
 
-def makeMS(runnum=0, noise=0.0, supports=True,
+def makeMS(runnum=0, makeBeams = True,
+           noise=0.0, supports=True,
            ell_u = 1.0, ell_v = 1.0,
            pointing = False, theta = 0.0):
 
@@ -44,57 +45,66 @@ def makeMS(runnum=0, noise=0.0, supports=True,
       stokesvals=[1.0,0.0,0.0,0.0]
       ftm='ft'
 
-      os.system('rm -rf '+dirname)
-      os.system('rm -rf '+resname)
-      os.system('rm -rf theresult.*')
-
-      clname = clname+str(i)+'.cl'
-      makeMSFrame(dirname=dirname,msname=msname,ra0=ra0,dec0=dec0,nchan=nchan);
-
-      os.system('mkdir '+apname)
-      os.system('mkdir '+pbname)
-
       num_ant = 28
 
       #addNoise(msname);
-      Nxy_list = []
-      for i in xrange(num_ant):
-          print "aper" + str(i)
-          image = apname+"/aper%02d" % i
-          aper,Nxy = makeAperture(image=image,imsize=imsize,
-                          cellsize=cellsize,reffreq=reffreq,
-                          noise=noise,supports=supports,
-                          ell_u=ell_u,ell_v=ell_v,
-                          pointing=pointing,theta=theta)
-          Nxy_list.append(Nxy)
-      for i in xrange(num_ant):
-          for j in xrange(num_ant):
-              if i < j:
-                  pbimage = pbname+"/pb%02d&&%02d" % (i,j)
-                  print "primary beam"+str(i)+"&&"+str(j)
-                  pb,area = makePrimaryBeam(imsize=imsize,cellsize=cellsize,
-                                reffreq=reffreq,pbname=pbimage,
-                                aper1_real=apname+"/aper%02dreal" % i,
-                                aper1_imag=apname+"/aper%02dimag" % i,
-                                aper2_real=apname+"/aper%02dreal" % j,
-                                aper2_imag=apname+"/aper%02dimag" % j,
-                                Nxy=Nxy_list[i]);
-              else:
-                  continue
+      if makeBeams == True:
+          os.system('rm -rf '+dirname)
+          os.system('rm -rf '+resname)
+          os.system('rm -rf theresult.*')
+
+          clname = clname+str(i)+'.cl'
+          makeMSFrame(dirname=dirname,msname=msname,
+                      ra0=ra0,dec0=dec0,nchan=nchan);
+
+          os.system('mkdir '+apname)
+          os.system('mkdir '+pbname)
+
+          Nxy_list = []
+          for i in xrange(num_ant):
+              print "aper" + str(i)
+              image = apname+"/aper%02d" % i
+              Nxy = makeAperture(image=image,imsize=imsize,
+                              cellsize=cellsize,reffreq=reffreq,
+                              noise=noise,supports=supports,
+                              ell_u=ell_u,ell_v=ell_v,
+                              pointing=pointing,theta=theta)
+              Nxy_list.append(Nxy)
+          for i in xrange(num_ant):
+              for j in xrange(num_ant):
+                  if i < j:
+                      pbimage = pbname+"/pb%02d&&%02d" % (i,j)
+                      print "primary beam"+str(i)+"&&"+str(j)
+                      makePrimaryBeam(imsize=imsize,cellsize=cellsize,
+                                    reffreq=reffreq,pbname=pbimage,
+                                    aper1_real=apname+"/aper%02dreal" % i,
+                                    aper1_imag=apname+"/aper%02dimag" % i,
+                                    aper2_real=apname+"/aper%02dreal" % j,
+                                    aper2_imag=apname+"/aper%02dimag" % j,
+                                    Nxy=Nxy_list[i]);
+                  else:
+                      continue
+      else:
+          clname = clname+str(i)+'.cl'
+          makeMSFrame(dirname=dirname,msname=msname,
+                      ra0=ra0,dec0=dec0,nchan=nchan);
+
+      makeImage(msname=msname,imname=imname,clname=clname,
+                imsize=imsize,cellsize=cellsize,ra0=ra0,dec0=dec0,
+                nchan=nchan,reffreq=reffreq)
+
       for i in xrange(num_ant):
           for j in xrange(num_ant):
               if i < j:
                   pair = "%02d&&%02d" % (i,j)
+                  newimname = imname+"%02d&&%02d" % (i,j)
                   pbimage = pbname+"/pb%02d&&%02d" % (i,j)
                   pbreal = pbname+"/pb%02d&&%02dreal" % (i,j)
                   pbimag = pbname+"/pb%02d&&%02dimag" % (i,j)
-                  makeTrueImage(stokesvals=stokesvals,msname=msname,
-                                imname=imname,pbname=pbimage,
-                                clname=clname,imsize=imsize,cellsize=cellsize,
-                                ra0=ra0,dec0=dec0,nchan=nchan,reffreq=reffreq,
-                                pb_real_file = pbreal,
-                                pb_imag_file = pbimag)
-                  predictTrueImage(msname=msname,ftm=ftm,imname=imname,
+                  makeTrueImage(stokesvals=stokesvals,imname=imname,
+                                newimname=newimname,
+                                pb_real_file = pbreal,pb_imag_file = pbimag)
+                  predictTrueImage(msname=msname,ftm=ftm,imname=newimname,
                            imsize=imsize,cellsize=cellsize,ra0=ra0, dec0=dec0,
                            nchan=nchan, reffreq=reffreq, num_ant=num_ant,
                            pair=pair, model=False);
@@ -269,8 +279,8 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
         
         # Add phase ramp to aperture function
         if pointing == True:
-            offset_u = str(2 * random.random())+'arcmin'
-            offset_v = str(2 * random.random())+'arcmin'
+            offset_u = str(random.range(-2.0,2.0,0.1))+'arcmin'
+            offset_v = str(random.range(-2.0,2.0,0.1))+'arcmin'
         else:
             offset_u = '0.0arcmin'
             offset_v = '0.0arcmin'
@@ -294,7 +304,7 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
         imageFromArray(real(phs_aper),image+"real")
         imageFromArray(imag(phs_aper),image+"imag")
 
-        return phs_aper, Nxy
+        return Nxy
 
 ###############################################
 
@@ -341,72 +351,78 @@ def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',
 
         aper_area = -1
         
-        return power,aper_area
-
 ###############################################
 
 def makeResidualImage(msname='',resname='',imsize=256,cellsize='8.0arcsec',
                       ra0='', dec0='', nchan=1, reffreq='1.5GHz'):
   ## Make model image
     im.open(msname);
+    im.selectvis()
     im.defineimage(nx=imsize,ny=imsize,cellx=cellsize,celly=cellsize,
                       stokes='IQUV',spw=[0],
                       phasecenter=me.direction(rf='J2000',v0=ra0,v1=dec0),
                       mode='channel',nchan=nchan,start=0,step=1,
                       restfreq=reffreq);
     im.makeimage(type="residual",image=resname);
-    im.close();
+    im.done();
 
 ###############################################
 
-def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],msname='',
-                   imname='',pbname='',clname='mysources.cl',
-                   image="model",imsize=256,cellsize='8.0arcsec',
-                   ra0='', dec0='', nchan=1, reffreq='1.5GHz',
-                   pb_real_file = "pb00&&01real", pb_imag_file = "pb00&&01imag",
-                   area = -1):
-
-    # noise == True: there is Gaussian noise in the aperture function
-    # supports == True: there are shadows from the support beams
+def makeImage(msname='',imname='',clname='mysource.cl',
+              imsize=256,cellsize='8.0arcsec',ra0='',dec0='',
+              nchan=1,reffreq='1.5GHz'):
 
   ## Make model image
-  os.system('rm -rf '+imname);
+  os.system('rm -rf '+imname+'*');
   im.open(msname);
+  im.selectvis()
   im.defineimage(nx=imsize,ny=imsize,cellx=cellsize,celly=cellsize,
                  stokes='IQUV',spw=[0],
                  phasecenter=me.direction(rf='J2000',v0=ra0,v1=dec0),
                  mode='channel',nchan=nchan,start=0,step=1,
                  restfreq=reffreq);
   im.make(image=imname);
-  im.make(image=pbname)
-  im.close();
+  im.done();
 
+  cl.open(clname)
+  ia.open(imname);
+  ia.modify(model=cl.torecord(),subtract=False);
+  cl.close();
+
+###############################################
+
+def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],imname='',newimname='',
+                   pb_real_file = "pb00&&01real",
+                   pb_imag_file = "pb00&&01imag"):
+
+    # noise == True: there is Gaussian noise in the aperture function
+    # supports == True: there are shadows from the support beams
+
+  cmd = 'cp -r '+imname+' '+newimname
+  cmd = cmd.replace('&','\&')
+  os.system(cmd)
   ia.open(pb_real_file)
   pb_real = ia.getchunk()
   ia.close()
 
-  ia.open(pb_imag_file)
-  pb_imag = ia.getchunk()
-  ia.close()
+  #ia.open(pb_imag_file)
+  #pb_imag = ia.getchunk()
+  #ia.close()
 
-  pb = pb_real + (sqrt(-1) * pb_imag)
+  pb = pb_real #+ (sqrt(-1) * pb_imag)
 
   # Fill in from the componentlist 
-  cl.open(clname);
-  ia.open(imname);
-  ia.modify(model=cl.torecord(),subtract=False);
-  cl.close();
+  ia.open(newimname)
   vals = ia.getchunk();
   vals[:,:,0,0] = vals[:,:,0,0] * real(pb[:,:]);
   ia.putchunk(vals);
   ia.close();
-  print vals[imsize/2,imsize/2,0,0]
 
-  ia.open(pbname)
-  vals = ia.getchunk()
-  vals[:,:,0,0] = real(pb[:,:])
-  ia.putchunk(vals)
-  ia.close()
+  #ia.open(pbname)
+  #vals = ia.getchunk()
+  #vals[:,:,0,0] = real(pb[:,:])
+  #ia.putchunk(vals)
+  #ia.close()
 
   # Fill in model image with 'stokesvals'
   #ia.open(imname);  
