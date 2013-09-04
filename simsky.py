@@ -21,7 +21,7 @@ def makeMS(runnum=0, makeBeams = True,
            pointing = False, theta = 0.0):
 
 
-  for i in xrange(1):
+  for i in xrange(2):
       dirname = "Data"+str(runnum)
       if i == 0:
           dirname = dirname+"-centered"
@@ -60,6 +60,14 @@ def makeMS(runnum=0, makeBeams = True,
           os.system('mkdir '+apname)
           os.system('mkdir '+pbname)
 
+          makeImage(msname=msname,imname=imname,clname=clname,
+                    imsize=imsize,cellsize=cellsize,ra0=ra0,dec0=dec0,
+                    nchan=nchan,reffreq=reffreq)
+
+          ia.open(imname)
+          coord = ia.coordsys()
+          ia.close()
+
           Nxy_list = []
           for i in xrange(num_ant):
               print "aper" + str(i)
@@ -76,6 +84,7 @@ def makeMS(runnum=0, makeBeams = True,
                       pbimage = pbname+"/pb%02d&&%02d" % (i,j)
                       print "primary beam"+str(i)+"&&"+str(j)
                       makePrimaryBeam(imsize=imsize,cellsize=cellsize,
+                                    coord = coord.torecord(),
                                     reffreq=reffreq,pbname=pbimage,
                                     aper1_real=apname+"/aper%02dreal" % i,
                                     aper1_imag=apname+"/aper%02dimag" % i,
@@ -88,10 +97,10 @@ def makeMS(runnum=0, makeBeams = True,
           clname = clname+str(i)+'.cl'
           makeMSFrame(dirname=dirname,msname=msname,
                       ra0=ra0,dec0=dec0,nchan=nchan);
+          makeImage(msname=msname,imname=imname,clname=clname,
+                    imsize=imsize,cellsize=cellsize,ra0=ra0,dec0=dec0,
+                    nchan=nchan,reffreq=reffreq)
 
-      makeImage(msname=msname,imname=imname,clname=clname,
-                imsize=imsize,cellsize=cellsize,ra0=ra0,dec0=dec0,
-                nchan=nchan,reffreq=reffreq)
 
       for i in xrange(num_ant):
           for j in xrange(num_ant):
@@ -101,6 +110,7 @@ def makeMS(runnum=0, makeBeams = True,
                   pbimage = pbname+"/pb%02d&&%02d" % (i,j)
                   pbreal = pbname+"/pb%02d&&%02dreal" % (i,j)
                   pbimag = pbname+"/pb%02d&&%02dimag" % (i,j)
+                  print pair
                   makeTrueImage(stokesvals=stokesvals,imname=imname,
                                 newimname=newimname,
                                 pb_real_file = pbreal,pb_imag_file = pbimag)
@@ -201,9 +211,9 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan):
 
 ###############################################
 
-def imageFromArray(arr,outfile,linear=F):
+def imageFromArray(arr,outfile,coord,linear=F):
     newia = casac.image()
-    newia.fromarray(outfile=outfile,pixels=arr,linear=F,overwrite=T)
+    newia.fromarray(outfile=outfile,pixels=arr,csys=coord,linear=F,overwrite=T)
     newia.close()
 
 ###############################################
@@ -308,7 +318,7 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
 
 ###############################################
 
-def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',
+def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',coord="coord.torecord()",
                     reffreq='1.5GHz', pbname = "model",
                     aper1_real = "aper00real", aper1_imag = "aper00imag",
                     aper2_real = "aper01real", aper2_imag = "aper01imag",
@@ -340,14 +350,13 @@ def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',
         #auto_corr = auto_corr / aper_area
 
         # Power pattern function
-        #volt1 = fftpack.ifft2(fftpack.fftshift(aper1))
-        #volt2 = fftpack.ifft2(fftpack.fftshift(aper2))
         power = (Nxy**2) * fftpack.ifft2(fftpack.fftshift(auto_corr))
         power = fftpack.ifftshift(power)
         power = power / max(power)
+        power = power.reshape((2048,2048,1,1))
 
-        imageFromArray(real(power),pbname+"real")
-        imageFromArray(imag(power),pbname+"imag")
+        imageFromArray(real(power),pbname+"real",coord)
+        imageFromArray(imag(power),pbname+"imag",coord)
 
         aper_area = -1
         
@@ -409,37 +418,10 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],imname='',newimname='',
   #pb_imag = ia.getchunk()
   #ia.close()
 
-  pb = pb_real #+ (sqrt(-1) * pb_imag)
-
   # Fill in from the componentlist 
   ia.open(newimname)
-  vals = ia.getchunk();
-  vals[:,:,0,0] = vals[:,:,0,0] * real(pb[:,:]);
-  ia.putchunk(vals);
+  ia.calc('"'+imname+'" * "'+pb_real_file+'"')
   ia.close();
-
-  #ia.open(pbname)
-  #vals = ia.getchunk()
-  #vals[:,:,0,0] = real(pb[:,:])
-  #ia.putchunk(vals)
-  #ia.close()
-
-  # Fill in model image with 'stokesvals'
-  #ia.open(imname);  
-  #vals = ia.getchunk();
-  #vals.fill(0.0);
-  #shp = vals.shape;
-  #for stokes in range(0,shp[2]):
-  #  for chan in range(0,shp[3]):
-  #    xpix = shp[0]/2.0+5;
-  #    ypix = shp[0]/2.0;
-  #    vals[xpix,ypix,stokes,chan] = stokesvals[stokes];
-  #    xpix = shp[0]/2.0;
-  #    vals[xpix,ypix,stokes,chan] = stokesvals[stokes];
-  #pb = makePrimaryBeam(imsize,cellsize,reffreq);
-  #vals = vals[:,:,0,0] * abs(pb[:,:]);
-  #ia.putchunk(vals);
-  #ia.close();
 
 ###############################################
 

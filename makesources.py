@@ -78,12 +78,13 @@ makeComponentList(clname=clname+'0.cl',ncomps=1,shapes=['point'],fluxvals=[1.0],
         spxs=[0.0],reffreq=reffreq);
 makeComponentList(clname=clname+'1.cl',ncomps=1,shapes=['point'],fluxvals=[1.0],
         minaxes=[""], majaxes=[""],
-        posangles=[""],ras=["1.22arcmin"],decs=["1.22arcmin"],
+        posangles=[""],ras=["0.0arcmin","1.22arcmin","2.02arcmin"],
+        decs=["0.0arcmin","1.22arcmin","2.02arcmin"],
         spxs=[0.0],reffreq=reffreq);
-makeComponentList(clname=clname+'2.cl',ncomps=1,shapes=['point'],fluxvals=[1.0],
-        minaxes=[""], majaxes=[""],
-        posangles=[""],ras=["2.02arcmin"],decs=["2.02arcmin"],
-        spxs=[0.0],reffreq=reffreq);
+#makeComponentList(clname=clname+'2.cl',ncomps=1,shapes=['point'],fluxvals=[1.0],
+#        minaxes=[""], majaxes=[""],
+#        posangles=[""],ras=["2.02arcmin"],decs=["2.02arcmin"],
+#        spxs=[0.0],reffreq=reffreq);
 
 
 ## Un-comment and put these few lines into the  makeTrueImage() function - in the place where you've been modifying the source positions. This will evaluate the components onto the image grid. You should be able to see the Gaussians in the 'true' image after this. 
