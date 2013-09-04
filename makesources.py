@@ -74,13 +74,16 @@ reffreq = '12.0GHz'
 # components placed such that there is one source per simulation, placed at
 # full-power, half-power, and around 10-20% power points of the beam.
 makeComponentList(clname=clname+'0.cl',ncomps=1,shapes=['point'],fluxvals=[1.0],
-        minaxes=[""], majaxes=[""], posangles=[""],ras=["0.0arcmin"],decs=["0.0arcmin"],
+        minaxes=[""], majaxes=[""], posangles=[""],
+        ras=["0.0arcmin"],decs=["0.0arcmin"],
         spxs=[0.0],reffreq=reffreq);
-makeComponentList(clname=clname+'1.cl',ncomps=1,shapes=['point'],fluxvals=[1.0],
-        minaxes=[""], majaxes=[""],
-        posangles=[""],ras=["0.0arcmin","1.22arcmin","2.02arcmin"],
+makeComponentList(clname=clname+'1.cl',ncomps=3,
+        shapes=['point','point','point'],fluxvals=[1.0,1.0,1.0],
+        minaxes=["","",""], majaxes=["","",""],
+        posangles=["","",""],
+        ras=["0.0arcmin","1.22arcmin","2.02arcmin"],
         decs=["0.0arcmin","1.22arcmin","2.02arcmin"],
-        spxs=[0.0],reffreq=reffreq);
+        spxs=[0.0,0.0,0.0],reffreq=reffreq);
 #makeComponentList(clname=clname+'2.cl',ncomps=1,shapes=['point'],fluxvals=[1.0],
 #        minaxes=[""], majaxes=[""],
 #        posangles=[""],ras=["2.02arcmin"],decs=["2.02arcmin"],
