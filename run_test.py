@@ -154,8 +154,13 @@ available_tests = [
         settings=[{'ell_u': val} for val in linspace(1.0,1.05,6)],
         xlabel="Percent Increase in Semimajor Axis"),
     Test(
-        name='pointing', desc='Pointing Offset', xaxis='offset_u', xtransform=1/6.8,
-        settings=[{'pointing': True, 'pointing': False}]),
+        name='pointing', desc='Pointing Offset', xtransform=1/6.8,
+        settings=[{'pointing': False}, {'pointing': True}]),
+    Test(
+        name='pointing-no-make', desc='Pointing Offset',
+        xtransform=1/6.8,
+        settings=[{'pointing': True, 'makeBeams': False},
+            {'pointing': False, 'makeBeams': False}]),
     Test(
         name='point_eccentricity', desc='Pointing Offset & Eccentricity',
         xaxis='offset_u',
