@@ -42,10 +42,10 @@ def makeMS(runnum=0, makeBeams = True,
       imsize=2048;
       cellsize='0.07arcmin';
       reffreq='12.0GHz';
-      stokesvals=[1.0,0.0,0.0,0.0]
+      stokesvals=[1.0,0.0,0.0,1.0]
       ftm='ft'
 
-      num_ant = 28
+      num_ant = 5
 
       #addNoise(msname);
       if makeBeams == True:
@@ -112,8 +112,8 @@ def makeMS(runnum=0, makeBeams = True,
                   pair = "%02d&&%02d" % (i,j)
                   newimname = imname+"%02d&&%02d" % (i,j)
                   pbimage = pbname+"/pb%02d&&%02d" % (i,j)
-                  pbreal = pbimage+"real" % (i,j)
-                  pbimag = pbimage+"imag" % (i,j)
+                  pbreal = pbimage+"real"
+                  pbimag = pbimage+"imag"
                   print pair
                   makeTrueImage(stokesvals=stokesvals,imname=imname,
                                 newimname=newimname,
@@ -180,18 +180,18 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan):
     cmd = 'mkdir ' + dirname;
     os.system(cmd);
 
-  #vx = [41.1100006,  -34.110001,  -268.309998,  439.410004,  -444.210022]
-  #vy = [3.51999998, 129.8300018,  +102.480003, -182.149994, -277.589996]
-  #vz = [0.25,       -0.439999998, -1.46000004, -3.77999997, -5.9000001]
-  #d = [25.0,       25.0,         25.0,         25.0,       25.0]
-  #an = ['VLA1','VLA2','VLA3','VLA4','VLA5'];
-  #nn = len(vx)*2.0;
-  #x = 5.0*(vx - (sum(pl.array(vx))/(nn)));
-  #y = 5.0*(vy - (sum(pl.array(vy))/(nn)));
-  #z = 5.0*(vz - (sum(pl.array(vz))/(nn)));
+  vx = [41.1100006,  -34.110001,  -268.309998,  439.410004,  -444.210022]
+  vy = [3.51999998, 129.8300018,  +102.480003, -182.149994, -277.589996]
+  vz = [0.25,       -0.439999998, -1.46000004, -3.77999997, -5.9000001]
+  d = [25.0,       25.0,         25.0,         25.0,       25.0]
+  an = ['VLA1','VLA2','VLA3','VLA4','VLA5'];
+  nn = len(vx)*2.0;
+  x = 5.0*(vx - (sum(pl.array(vx))/(nn)));
+  y = 5.0*(vy - (sum(pl.array(vy))/(nn)));
+  z = 5.0*(vz - (sum(pl.array(vz))/(nn)));
 
   ####  This call will get locations for all 27 vla antennas.
-  d, an, x, y, z = getAntLocations()
+  #d, an, x, y, z = getAntLocations()
 
 
   obspos = me.observatory('VLA');
@@ -292,12 +292,11 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
         # polarization squint
         phs_r = zeros((Nuv,Nuv))
         phs_l = zeros((Nuv,Nuv))
-        offset_ru = (0.06*d_uv)
-        offset_rv = (0.06*d_uv)
-        uu,vv = mgrid[:Nuv, :Nuv]
+        offset_ru = (0.06*wvlen/d)
+        offset_rv = (0.06*wvlen/d)
         j = sqrt(-1)
-        phs_ru = -1 * (uvals[uu] + uvcell/2.0) * ( offset_ru / 60.0 * ( pi / 180.0 ) ) * 2 * pi
-        phs_rv = -1 * (vvals[vv] + uvcell/2.0) * ( offset_rv / 60.0 * ( pi / 180.0 ) ) * 2 * pi
+        phs_ru = -1 * (uvals[uu] + uvcell/2.0) * ( offset_ru ) * 2 * pi
+        phs_rv = -1 * (vvals[vv] + uvcell/2.0) * ( offset_rv ) * 2 * pi
         phs_r = exp(j*(phs_ru + phs_rv))
         phs_l = exp(-1*j*(phs_ru + phs_rv))
 
@@ -339,6 +338,10 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
         imageFromArray(imag(phs_aper_r),image+"Rimag")
         imageFromArray(real(phs_aper_l),image+"Lreal")
         imageFromArray(imag(phs_aper_l),image+"Limag")
+
+        del aper,phs_r,phs_l,phs_ru,phs_rv,aper_r,aper_l,aper_Rreal,aper_Rimag,\
+            aper_Lreal,aper_Limag,phs,phs_u,phs_v,phs_aper_r,phs_aper_l
+        del uu, vv, circle, disk, uvals, vvals
 
         return Nxy
 
@@ -388,8 +391,6 @@ def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',coord="coord.torecord()",
             aper1 = a1_real + (sqrt(-1) * a1_imag)
             aper2 = a2_real + (sqrt(-1) * a2_imag)
             auto_corr = signal.fftconvolve(aper1, aper2, 'same')
-            aper_area = auto_corr.sum()
-            #auto_corr = auto_corr / aper_area
 
             # Power pattern function
             power = (Nxy**2) * fftpack.ifft2(fftpack.fftshift(auto_corr))
@@ -411,6 +412,9 @@ def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',coord="coord.torecord()",
         imageFromArray(imag(stokes_power),pbname+"imag",coord)
 
         aper_area = -1
+
+        del aper1_real, aper1_imag, aper2_real, aper2_imag, auto_corr, power,\
+            power_r, power_l, stokes_power
         
 ###############################################
 
@@ -452,7 +456,7 @@ def makeImage(msname='',imname='',clname='mysource.cl',
 
 ###############################################
 
-def makeTrueImage(stokesvals=[1.0,0.0,0.0,0.0],imname='',newimname='',
+def makeTrueImage(stokesvals=[1.0,0.0,0.0,1.0],imname='',newimname='',
                    pb_real_file = "pb00&&01real",
                    pb_imag_file = "pb00&&01imag"):
 
