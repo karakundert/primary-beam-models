@@ -13,6 +13,8 @@ from scipy import ndimage
 import matplotlib.pylab as pl
 import random
 
+execfile('parang.py')
+
 ###############################################
 
 def makeMS(runnum=0, makeBeams = True,
@@ -45,7 +47,7 @@ def makeMS(runnum=0, makeBeams = True,
       stokesvals=[1.0,0.0,0.0,1.0]
       ftm='ft'
 
-      num_ant = 5
+      num_ant = 27
 
       #addNoise(msname);
       if makeBeams == True:
@@ -76,7 +78,7 @@ def makeMS(runnum=0, makeBeams = True,
                               cellsize=cellsize,reffreq=reffreq,
                               noise=noise,supports=supports,
                               ell_u=ell_u,ell_v=ell_v,
-                              pointing=pointing,theta=theta)
+                              pointing=pointing)
               Nxy_list.append(Nxy)
           for i in xrange(num_ant):
               for j in xrange(num_ant):
@@ -117,11 +119,11 @@ def makeMS(runnum=0, makeBeams = True,
                   print pair
                   makeTrueImage(stokesvals=stokesvals,imname=imname,
                                 newimname=newimname,
-                                pb_real_file = pbreal,pb_imag_file = pbimag)
-                  predictTrueImage(msname=msname,ftm=ftm,imname=newimname,
-                           imsize=imsize,cellsize=cellsize,ra0=ra0, dec0=dec0,
-                           nchan=nchan, reffreq=reffreq, num_ant=num_ant,
-                           pair=pair, model=False);
+                                pb_real_file = pbreal,pb_imag_file = pbimag,
+                                msname=msname,ftm=ftm,imsize=imsize,
+                                cellsize=cellsize,ra0=ra0, dec0=dec0,
+                                nchan=nchan, reffreq=reffreq, num_ant=num_ant,
+                                pair=pair, model=False);
               else:
                   continue
 
@@ -180,18 +182,18 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan):
     cmd = 'mkdir ' + dirname;
     os.system(cmd);
 
-  vx = [41.1100006,  -34.110001,  -268.309998,  439.410004,  -444.210022]
-  vy = [3.51999998, 129.8300018,  +102.480003, -182.149994, -277.589996]
-  vz = [0.25,       -0.439999998, -1.46000004, -3.77999997, -5.9000001]
-  d = [25.0,       25.0,         25.0,         25.0,       25.0]
-  an = ['VLA1','VLA2','VLA3','VLA4','VLA5'];
-  nn = len(vx)*2.0;
-  x = 5.0*(vx - (sum(pl.array(vx))/(nn)));
-  y = 5.0*(vy - (sum(pl.array(vy))/(nn)));
-  z = 5.0*(vz - (sum(pl.array(vz))/(nn)));
+  #vx = [41.1100006,  -34.110001,  -268.309998,  439.410004,  -444.210022]
+  #vy = [3.51999998, 129.8300018,  +102.480003, -182.149994, -277.589996]
+  #vz = [0.25,       -0.439999998, -1.46000004, -3.77999997, -5.9000001]
+  #d = [25.0,       25.0,         25.0,         25.0,       25.0]
+  #an = ['VLA1','VLA2','VLA3','VLA4','VLA5'];
+  #nn = len(vx)*2.0;
+  #x = 5.0*(vx - (sum(pl.array(vx))/(nn)));
+  #y = 5.0*(vy - (sum(pl.array(vy))/(nn)));
+  #z = 5.0*(vz - (sum(pl.array(vz))/(nn)));
 
   ####  This call will get locations for all 27 vla antennas.
-  #d, an, x, y, z = getAntLocations()
+  d, an, x, y, z = getAntLocations()
 
 
   obspos = me.observatory('VLA');
@@ -202,16 +204,26 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan):
   sm.setconfig(telescopename='VLA',x=x.tolist(),y=y.tolist(),z=z.tolist(),dishdiameter=d,
                mount=['alt-az'], antname=an,
                coordsystem='local',referencelocation=obspos);
-  sm.setspwindow(spwname="LBand",freq="1.0GHz",deltafreq='500MHz',
+  sm.setspwindow(spwname="CBand",freq="1.0GHz",deltafreq='500MHz',
                  freqresolution='2MHz',nchannels=nchan,stokes=msstokes);
   sm.setfeed(mode=feedtype,pol=['']);
   sm.setfield( sourcename="fake",sourcedirection=me.direction(rf='J2000',v0=ra0,v1=dec0) );
   sm.setlimits(shadowlimit=0.01, elevationlimit='10deg');
   sm.setauto(autocorrwt=0.0);
-  sm.settimes(integrationtime='1000s', usehourangle=True,
+  sm.settimes(integrationtime='1800s', usehourangle=True,
                        referencetime=me.epoch('UTC','2013/05/10/00:00:00'));
-  sm.observe(sourcename="fake",spwname='LBand', starttime='-3.0h', stoptime='+2.0h');
+  # Every 30 minutes, from -3h to +3h
+  ostep = 0.5
+  for loop in pl.arange(-3.0,+3.0,ostep):
+    starttime = loop
+    stoptime = starttime + ostep
+    print starttime, stoptime
+    for ch in range(0,nchan):
+        sm.observe(sourcename="fake",spwname='CBand',
+                   starttime=str(starttime)+'h', stoptime=str(stoptime)+'h');
   sm.close();
+
+  listobs(vis=msname)
 
 ###############################################
 
@@ -225,7 +237,7 @@ def imageFromArray(arr,outfile,coord={},linear=F):
 def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
                     reffreq='1.5GHz', noise = 0.0, supports=True,
                     ell_u = 1.0, ell_v = 1.0,
-                    pointing = True, theta = 0.0):
+                    pointing = True):
 
         # noise == True: there is Gaussian noise in the aperture function
         # supports == True: there are shadows from the support beams
@@ -302,15 +314,7 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
 
         aper_r = aper * phs_r
         aper_l = aper * phs_l
-        
-        aper_Rreal=ndimage.rotate(input=real(aper_r),angle=theta,reshape=False)
-        aper_Rimag=ndimage.rotate(input=imag(aper_r),angle=theta,reshape=False)
-        aper_Lreal=ndimage.rotate(input=real(aper_l),angle=theta,reshape=False)
-        aper_Limag=ndimage.rotate(input=imag(aper_l),angle=theta,reshape=False)
 
-        aper_r = aper_Rreal + j*aper_Rimag
-        aper_l = aper_Lreal + j*aper_Limag
-        
         # Add phase ramp to aperture function
         if pointing == True:
             offset_u = str(random.uniform(-2.0,2.0))+'arcmin'
@@ -339,8 +343,8 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
         imageFromArray(real(phs_aper_l),image+"Lreal")
         imageFromArray(imag(phs_aper_l),image+"Limag")
 
-        del aper,phs_r,phs_l,phs_ru,phs_rv,aper_r,aper_l,aper_Rreal,aper_Rimag,\
-            aper_Lreal,aper_Limag,phs,phs_u,phs_v,phs_aper_r,phs_aper_l
+        del aper,phs_r,phs_l,phs_ru,phs_rv,aper_r,aper_l,\
+            phs,phs_u,phs_v,phs_aper_r,phs_aper_l
         del uu, vv, circle, disk, uvals, vvals
 
         return Nxy
@@ -458,53 +462,74 @@ def makeImage(msname='',imname='',clname='mysource.cl',
 
 def makeTrueImage(stokesvals=[1.0,0.0,0.0,1.0],imname='',newimname='',
                    pb_real_file = "pb00&&01real",
-                   pb_imag_file = "pb00&&01imag"):
+                   pb_imag_file = "pb00&&01imag",
+                   msname='', ftm='ft',imsize=256,
+                   cellsize='8.0arcsec',ra0='', dec0='',
+                   nchan=1, reffreq='1.5GHz',
+                   num_ant = 28, pair="00&&01",model = True):
 
-    # noise == True: there is Gaussian noise in the aperture function
-    # supports == True: there are shadows from the support beams
+  for scanid in range(12):
+      cmd = 'cp -r '+imname+' '+newimname
+      cmd = cmd.replace('&','\&')
+      os.system(cmd)
 
-  cmd = 'cp -r '+imname+' '+newimname
-  cmd = cmd.replace('&','\&')
-  os.system(cmd)
+      ia.open(pb_real_file)
+      pb_real = ia.getchunk()
+      ia.close()
 
-  #ia.open(pb_real_file)
-  #pb_real = ia.getchunk()
-  #ia.close()
+      ia.open(pb_imag_file)
+      pb_imag = ia.getchunk()
+      ia.close()
+        
+      tb.open(msname)
+      tb1 = tb.query('SCAN_NUMBER=='+str(scanid))
+      timelist = tb1.getcol('TIME')
+      print len(timelist)
+      tb1.close()
+      tb.close()
+      theta = parang(msname,0,timelist[0])
+      if theta < 0:
+          theta = theta + 360
+      print "time = " + str(timelist[0])
+      print "theta = " + str(theta)
 
-  #ia.open(pb_imag_file)
-  #pb_imag = ia.getchunk()
-  #ia.close()
+      pb_real=ndimage.rotate(input=pb_real[1:2048,1:2048,:,:],angle=theta,reshape=False)
+      pb_imag=ndimage.rotate(input=pb_imag[1:2048,1:2048,:,:],angle=theta,reshape=False)
 
-  # Fill in from the componentlist 
-  ia.open(newimname)
-  ia.calc('"'+imname+'" * "'+pb_real_file+'"')
-  ia.close();
+      pb = pb_real + sqrt(-1) * pb_imag
 
-###############################################
+      ia.open(imname)
+      vals = ia.getchunk()
+      ia.close()
 
-def predictTrueImage(msname='', ftm='ft',imname='',imsize=256,
-                                 cellsize='8.0arcsec',ra0='', dec0='',
-                                 nchan=1, reffreq='1.5GHz',
-                                 num_ant = 28, pair="00&&01",model = True):
-  ### Predicting
-  im.open(msname,usescratch=True);
-  im.selectvis(baseline=pair,nchan=nchan,start=0,step=1);
-  im.defineimage(nx=imsize,ny=imsize,cellx=cellsize,celly=cellsize,
-                 stokes='IQUV',spw=[0],
-                 phasecenter=me.direction(rf='J2000',v0=ra0,v1=dec0),
-                 mode='channel',nchan=nchan,start=0,step=1,
-                 restfreq=reffreq);
-  if(ftm=="awp"):
-     im.setoptions(cache=imsize*imsize*6*nchan,ftmachine=ftm,
-                   applypointingoffsets=False,
-                   dopbgriddingcorrections=False,
-                   cfcachedirname=imname+".cfcache",
-                   pastep=360.0,pblimit=0.001);
-  else:
-     im.setoptions(ftmachine="ft");
-  #im.setvp(dovp=True,usedefaultvp=True,telescope='EVLA');
-  im.ft(model=imname,incremental=False);
-  im.done();
+      # Fill in from the componentlist 
+      ia.open(newimname)
+      vals = vals[1:2048,1:2048,:,:] * pb_real
+      ia.putchunk(vals)
+      ia.close();
+
+      print vals[imsize/2,imsize/2,0,0]
+      print vals[imsize/2,imsize/2,3,0]
+
+      ### Predicting
+      im.open(msname,usescratch=True);
+      im.selectvis(baseline=pair,nchan=nchan,start=0,step=1,scan=scanid);
+      im.defineimage(nx=imsize,ny=imsize,cellx=cellsize,celly=cellsize,
+                     stokes='IQUV',spw=[0],
+                     phasecenter=me.direction(rf='J2000',v0=ra0,v1=dec0),
+                     mode='channel',nchan=nchan,start=0,step=1,
+                     restfreq=reffreq);
+      if(ftm=="awp"):
+         im.setoptions(cache=imsize*imsize*6*nchan,ftmachine=ftm,
+                       applypointingoffsets=False,
+                       dopbgriddingcorrections=False,
+                       cfcachedirname=imname+".cfcache",
+                       pastep=360.0,pblimit=0.001);
+      else:
+         im.setoptions(ftmachine="ft");
+      #im.setvp(dovp=True,usedefaultvp=True,telescope='EVLA');
+      im.ft(model=newimname,incremental=False);
+      im.done();
 
 #####################################
 
