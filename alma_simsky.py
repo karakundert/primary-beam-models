@@ -56,7 +56,7 @@ def makeMS(runnum=0, makeBeams = True,
       stokesvals=[1.0,0.0,0.0,1.0]
       ftm='ft'
 
-      num_ant = 5
+      num_ant = 3
 
       #addNoise(msname);
       if makeBeams == True:
@@ -211,18 +211,26 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan,numants):
   #d, an, x, y, z = getAntLocations()
 
   ####  This call will get locations for all ALMA antennas.
-  x = zeros(numants, 'float')
-  y = zeros(numants, 'float')
-  z = zeros(numants, 'float')
+  #x = zeros(numants, 'float')
+  #y = zeros(numants, 'float')
+  #z = zeros(numants, 'float')
   xx,yy,zz,d,pnames,nant,telescopename = util.readantenna('alma.cycle0.compact.cfg')
-  an = pnames
+  an = pnames[0:numants]
+  d = d[0:numants]
   nn = len(xx)*2.0;
   i = 0
-  while i < numants:
-      x[i] = (xx[i] - (sum(pl.array(xx[i]))/(nn)));
-      y[i] = (yy[i] - (sum(pl.array(yy[i]))/(nn)));
-      z[i] = (zz[i] - (sum(pl.array(zz[i]))/(nn)));
-      i = i + 1
+  #while i < numants:
+  #    x[i] = (xx[i] - (sum(pl.array(xx[i]))/(nn)));
+  #    y[i] = (yy[i] - (sum(pl.array(yy[i]))/(nn)));
+  #    z[i] = (zz[i] - (sum(pl.array(zz[i]))/(nn)));
+  #    i = i + 1
+  x = (xx - (sum(pl.array(xx))/(nn)));
+  y = (yy - (sum(pl.array(yy))/(nn)));
+  z = (zz - (sum(pl.array(zz))/(nn)));
+
+  x = x[0:numants]
+  y = y[0:numants]
+  z = z[0:numants]
 
 
   obspos = me.observatory('ALMA');
