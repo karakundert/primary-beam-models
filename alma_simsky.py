@@ -499,7 +499,7 @@ def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',coord="coord.torecord()",
 
         stokes_power = zeros((imsize,imsize,4,1))
         stokes_power[:,:,0,0] = (power_r[:,:] + power_l[:,:]) / 2
-        stokes_power[:,:,3,0] = (power_r[:,:] - power_l[:,:]) / 2
+        stokes_power[:,:,1,0] = (power_r[:,:] - power_l[:,:]) / 2
 
         imageFromArray(real(stokes_power),pbname+"real",coord)
         imageFromArray(imag(stokes_power),pbname+"imag",coord)
