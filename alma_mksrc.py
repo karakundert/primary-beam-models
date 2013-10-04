@@ -1,5 +1,5 @@
 def makeComponentList(clname="sim.cl",reffreq="1.5GHz",
-		      ra0="19:59:28.500",dec0="+40.44.01.50",
+		      ra0="19:59:28.500",dec0="-40.44.01.50",
 		      ncomps=1,shapes=["Gaussian"],
 		      fluxvals=[1.0],minaxes=["1.0arcmin"],
 		      majaxes=["1.0arcmin"],ras=["5.0arcmin"],
@@ -46,8 +46,8 @@ def makeComponentList(clname="sim.cl",reffreq="1.5GHz",
 
 clname = 'mysources';
 ra0="19:59:28.500";
-dec0="+40.44.01.50";
-reffreq = '6.0GHz'
+dec0="-40.44.01.50";
+reffreq = '100.0GHz'
 
 
 # Make a list of components.
@@ -61,6 +61,6 @@ reffreq = '6.0GHz'
 makeComponentList(clname=clname+'0.cl',ncomps=1,shapes=['point'],
         fluxvals=[[1.0,0.0,0.0,1.0]],
         minaxes=[""], majaxes=[""], posangles=[""],
-        ras=["2.0arcmin"],decs=["2.0arcmin"],
+        ras=["10.0arcsec"],decs=["10.0arcsec"],
         spxs=[0.0],reffreq=reffreq);
                             

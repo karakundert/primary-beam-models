@@ -1,4 +1,5 @@
-execfile('simsky.py')
+#execfile('simsky.py')
+execfile('alma_simsky.py')
 
 from numpy import *
 from scipy import *
@@ -139,8 +140,14 @@ class Test:
 available_tests = [
     # list of tests possible to be executed
     Test(
+        name='no_perturbation', desc='No Perturbation',
+        settings=[{'makeBeams': True}]),
+    Test(
+        name='no_perturbation_no_make', desc='No Perturbation',
+        settings=[{'makeBeams': False}]),
+    Test(
         name='noise', desc='Noise', xaxis='noise', xtransform=100,
-        settings=[{'noise': val} for val in linspace(0.0,0.5,6)],
+        settings=[{'noise': val} for val in linspace(0.3,0.5,3)],
         xlabel="Percent Noise Across Aperture"),
     Test(
         name='supports', desc='Support Beams On/Off',
@@ -157,10 +164,10 @@ available_tests = [
         name='pointing', desc='Pointing Offset', xtransform=1/6.8,
         settings=[{'pointing': False}, {'pointing': True}]),
     Test(
-        name='pointing-no-make', desc='Pointing Offset',
+        name='pointing_no_make', desc='Pointing Offset',
         xtransform=1/6.8,
-        settings=[{'pointing': True, 'makeBeams': False},
-            {'pointing': False, 'makeBeams': False}]),
+        settings=[{'pointing': False, 'makeBeams': False},
+            {'pointing': True, 'makeBeams': False}]),
     Test(
         name='point_eccentricity', desc='Pointing Offset & Eccentricity',
         xaxis='offset_u',

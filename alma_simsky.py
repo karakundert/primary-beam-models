@@ -9,15 +9,18 @@ from scipy import signal
 from numpy import fft
 from numpy import max
 from scipy import ndimage
+from simutil import *
 
 import matplotlib.pylab as pl
 import random
 import time
 
-execfile('mksrc.py')
+execfile('alma_mksrc.py')
 execfile('parang.py')
 execfile('writeAps.py')
-execfile('makeBeams.py')
+#execfile('makeBeams.py')
+
+util = simutil("")
 
 ###############################################
 
@@ -44,12 +47,12 @@ def makeMS(runnum=0, makeBeams = True,
       apname = dirname+"/apertures"
       clname = "mysources"
       ra0="19:59:28.500";
-      dec0="+40.44.01.50";
+      dec0="-40.44.01.50";
       nchan=1;
-      imsize=4096;
+      imsize=2048;
       predict_imsize = 1024
-      cellsize='3.8arcsec';
-      reffreq='6.0GHz';
+      cellsize='1.38arcsec';
+      reffreq='100.0GHz';
       stokesvals=[1.0,0.0,0.0,1.0]
       ftm='ft'
 
@@ -63,7 +66,7 @@ def makeMS(runnum=0, makeBeams = True,
 
           clname = clname+str(i)+'.cl'
           makeMSFrame(dirname=dirname,msname=msname,
-                      ra0=ra0,dec0=dec0,nchan=nchan);
+                      ra0=ra0,dec0=dec0,nchan=nchan,numants=num_ant);
 
           os.system('mkdir '+apname)
           os.system('mkdir '+pbname)
@@ -76,10 +79,10 @@ def makeMS(runnum=0, makeBeams = True,
           coord = ia.coordsys()
           ia.close()
 
-          os.system('rm -rf ap.ms')
-          os.system('cp -r '+msname+' ap.ms')
-          writeApertures(msname='ap.ms',imname=imname)
-          print "apertures written"
+          #os.system('rm -rf ap.ms')
+          #os.system('cp -r '+msname+' ap.ms')
+          #writeApertures(msname='ap.ms',imname=imname)
+          #print "apertures written"
           
           Nxy_list = []
           for i in xrange(num_ant):
@@ -113,7 +116,7 @@ def makeMS(runnum=0, makeBeams = True,
       else:
           clname = clname+str(i)+'.cl'
           makeMSFrame(dirname=dirname,msname=msname,
-                      ra0=ra0,dec0=dec0,nchan=nchan);
+                      ra0=ra0,dec0=dec0,nchan=nchan,numants=num_ant);
           makeImage(msname=msname,imname=imname,clname=clname,
                     imsize=imsize,cellsize=cellsize,ra0=ra0,dec0=dec0,
                     nchan=nchan,reffreq=reffreq)
@@ -184,9 +187,9 @@ def makeBeamDifference(pb1="primary-beam-model",pb2="primary-beam-perturbed"):
 ###############################################
 
 
-def makeMSFrame(dirname,msname,ra0,dec0,nchan):
-  msstokes='RR LL';
-  feedtype='perfect R L';
+def makeMSFrame(dirname,msname,ra0,dec0,nchan,numants):
+  msstokes='XX YY';
+  feedtype='perfect X Y';
 
 
   ## Directory for the MS
@@ -194,29 +197,43 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan):
     cmd = 'mkdir ' + dirname;
     os.system(cmd);
 
-  vx = [41.1100006,  -34.110001,  -268.309998,  439.410004,  -444.210022]
-  vy = [3.51999998, 129.8300018,  +102.480003, -182.149994, -277.589996]
-  vz = [0.25,       -0.439999998, -1.46000004, -3.77999997, -5.9000001]
-  d = [25.0,       25.0,         25.0,         25.0,       25.0]
-  an = ['VLA1','VLA2','VLA3','VLA4','VLA5'];
-  nn = len(vx)*2.0;
-  x = 0.5*(vx - (sum(pl.array(vx))/(nn)));
-  y = 0.5*(vy - (sum(pl.array(vy))/(nn)));
-  z = 0.5*(vz - (sum(pl.array(vz))/(nn)));
+  #vx = [41.1100006,  -34.110001,  -268.309998,  439.410004,  -444.210022]
+  #vy = [3.51999998, 129.8300018,  +102.480003, -182.149994, -277.589996]
+  #vz = [0.25,       -0.439999998, -1.46000004, -3.77999997, -5.9000001]
+  #d = [12.0,       12.0,         12.0,         12.0,       12.0]
+  #an = ['ALMA1','ALMA2','ALMA3','ALMA4','ALMA5'];
+  #nn = len(vx)*2.0;
+  #x = (vx - (sum(pl.array(vx))/(nn)));
+  #y = (vy - (sum(pl.array(vy))/(nn)));
+  #z = (vz - (sum(pl.array(vz))/(nn)));
 
   ####  This call will get locations for all 27 vla antennas.
   #d, an, x, y, z = getAntLocations()
 
+  ####  This call will get locations for all ALMA antennas.
+  x = zeros(numants, 'float')
+  y = zeros(numants, 'float')
+  z = zeros(numants, 'float')
+  xx,yy,zz,d,pnames,nant,telescopename = util.readantenna('alma.cycle0.compact.cfg')
+  an = pnames
+  nn = len(xx)*2.0;
+  i = 0
+  while i < numants:
+      x[i] = (xx[i] - (sum(pl.array(xx[i]))/(nn)));
+      y[i] = (yy[i] - (sum(pl.array(yy[i]))/(nn)));
+      z[i] = (zz[i] - (sum(pl.array(zz[i]))/(nn)));
+      i = i + 1
 
-  obspos = me.observatory('EVLA');
+
+  obspos = me.observatory('ALMA');
   #obspos = me.position('ITRF', '-0.0m', '0.0m', '3553971.510m');
 
   ## Make MS Frame
   sm.open(ms=msname);
-  sm.setconfig(telescopename='EVLA',x=x.tolist(),y=y.tolist(),z=z.tolist(),dishdiameter=d,
+  sm.setconfig(telescopename='ALMA',x=x.tolist(),y=y.tolist(),z=z.tolist(),dishdiameter=d,
                mount=['alt-az'], antname=an,
                coordsystem='local',referencelocation=obspos);
-  sm.setspwindow(spwname="CBand",freq="6.0GHz",deltafreq='500MHz',
+  sm.setspwindow(spwname="3Band",freq="100.0GHz",deltafreq='500MHz',
                  freqresolution='2MHz',nchannels=nchan,stokes=msstokes);
   sm.setfeed(mode=feedtype,pol=['']);
   sm.setfield( sourcename="fake",sourcedirection=me.direction(rf='J2000',v0=ra0,v1=dec0) );
@@ -231,12 +248,259 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan):
     stoptime = starttime + ostep
     print starttime, stoptime
     for ch in range(0,nchan):
-        sm.observe(sourcename="fake",spwname='CBand',
+        sm.observe(sourcename="fake",spwname='3Band',
                    starttime=str(starttime)+'h', stoptime=str(stoptime)+'h');
   sm.close();
 
   listobs(vis=msname)
 
+###############################################
+
+def imageFromArray(arr,outfile,coord={},linear=F):
+    newia = casac.image()
+    newia.fromarray(outfile=outfile,pixels=arr,csys=coord,linear=F,overwrite=T)
+    newia.close()
+
+###############################################
+
+def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
+                    reffreq='1.5GHz', noise = 0.0, supports=True,
+                    ell_u = 1.0, ell_v = 1.0,
+                    pointing = True):
+
+        # noise == True: there is Gaussian noise in the aperture function
+        # supports == True: there are shadows from the support beams
+
+        # ell_u and ell_v describe how elliptical the aperture is. If both are
+        # equal to each other, the aperture will be a circle. Any relative
+        # change in ell_u and ell_v will result in an elliptical aperture.
+
+        # theta = rotation of the beam, in degrees.
+
+        cell = qa.convert(qa.quantity(cellsize),'arcmin')['value']
+        fov = cell*imsize
+        freq = qa.convert(qa.quantity(reffreq),'Hz')['value']
+        c = 3e8
+        j = sqrt(-1)
+        wvlen = c / freq # observed wavelength
+        d = 25 # width of a dish in m
+        spat_lam = d / wvlen
+
+        # Image pixels
+        xvals = arange(-1*fov/2.0,fov/2.0,cell)
+        yvals = arange(-1*fov/2.0,fov/2.0,cell)
+        Nxy = xvals.shape[0]
+
+        # UV cell size and extent - in units of wavelengths
+        uvcell = 1 / (fov/60.0 * pi/180.0)
+        uvmax = Nxy/2.0 * uvcell
+        d_uv = spat_lam / uvcell
+
+        uvals = arange(-1*uvmax, uvmax, uvcell)
+        vvals = arange(-1*uvmax, uvmax, uvcell)
+        Nuv = uvals.shape[0]
+
+        print 'cell (arcmin): ', cell
+        print 'fov (arcmin): ', fov
+        print 'uvcell (lambda): ',uvcell
+        print 'uvmax (lambda): ', uvmax
+
+        print Nxy, Nuv  # To make sure they're equal !
+
+        ###################
+
+        # Aperture Function
+        aper = zeros((Nuv,Nuv))
+        uu, vv = mgrid[:Nuv, :Nuv]
+        circle = (ell_u * (uu - ((Nuv/2.0) - 0.5)) ** 2) + (ell_v * (vv -
+                 ((Nuv/2.0) - 0.5)) ** 2)
+        disk = circle < (d_uv/2.0)**2
+        aper[disk] = 1.0
+        for u in xrange(Nuv):
+            for v in xrange(Nuv):
+                if aper[u][v]==1.0:
+                    if disk[u][v] == True:
+                        if supports == True:
+                            # to get secondary reflector support beam shadows
+                            if u == (Nuv/2) or v == (Nuv/2):
+                                aper[u][v] = 0
+                            elif u == (Nuv/2 - 1) or v == (Nuv/2 - 1):
+                                aper[u][v] = 0
+                            else:
+                                aper[u][v] = 1.0 + random.gauss(0,noise);
+                        else:
+                            aper[u][v] = 1.0 + random.gauss(0,noise);
+       
+        aper_r = zeros((Nuv,Nuv), 'complex')
+        aper_l = zeros((Nuv,Nuv), 'complex')
+        phs_r = zeros((Nuv,Nuv))
+        phs_l = zeros((Nuv,Nuv))
+
+        offset_r = (0.06*wvlen/d)
+        phs_ru = -1 * (uvals[uu] + uvcell/2.0) * (offset_r) * 2 * pi
+        phs_rv = -1 * (vvals[vv] + uvcell/2.0) * (offset_r) * 2 * pi
+        phs_r = exp(j * (phs_ru + phs_rv))
+        phs_l = exp(-1 * j * (phs_ru + phs_rv))
+        
+        aper_r = aper * phs_r
+        aper_l = aper * phs_l
+
+        #ia.open('reaperture_pol9.im')
+        #aper_r_real = ia.getchunk()
+        #ia.close()
+
+        #ia.open('imaperture_pol9.im')
+        #aper_r_imag = ia.getchunk()
+        #ia.close()
+
+        #ia.open('reaperture_pol12.im')
+        #aper_l_real = ia.getchunk()
+        #ia.close()
+
+        #ia.open('imaperture_pol12.im')
+        #aper_l_imag = ia.getchunk()
+        #ia.close()
+
+        #real_aper_r = zeros((1024,1024))
+        #imag_aper_r = zeros((1024,1024))
+        #real_aper_l = zeros((1024,1024))
+        #imag_aper_l = zeros((1024,1024))
+
+        #real_aper_r = aper_r_real[:,:,0,0]
+        #imag_aper_r = aper_r_imag[:,:,0,0]
+        #real_aper_l = aper_l_real[:,:,0,0]
+        #imag_aper_l = aper_l_imag[:,:,0,0]
+
+        #aper_r[1536:2560,1536:2560] = real_aper_r + j * imag_aper_r
+        #aper_l[1536:2560,1536:2560] = real_aper_l + j * imag_aper_l
+        
+        imageFromArray(imag(aper_r),"squint_r")
+        imageFromArray(imag(aper_l),"squint_l")
+
+        # Add phase ramp to aperture function
+        if pointing == True:
+            offset_u = str(random.uniform(-0.5,0.5))+'arcmin'
+            offset_v = str(random.uniform(-0.5,0.5))+'arcmin'
+        else:
+            offset_u = '0.0arcmin'
+            offset_v = '0.0arcmin'
+        phs_off_u = qa.quantity(offset_u)['value']
+        phs_off_v = qa.quantity(offset_v)['value']
+        shift_u = phs_off_u # in arcmins
+        shift_v = phs_off_v # in arcmins
+        phs = zeros((Nuv,Nuv))
+        phs_u = -1 * (uvals[uu] + uvcell/2.0) * ( shift_u / 60.0 * ( pi / 180.0 ) ) * 2 * pi
+        phs_v = -1 * (vvals[vv] + uvcell/2.0) * ( shift_v / 60.0 * ( pi / 180.0 ) ) * 2 * pi
+
+        #real_noise = zeros((Nuv,Nuv))
+        #imag_noise = zeros((Nuv,Nuv))
+        #for i in xrange(Nuv):
+        #    for j in xrange(Nuv):
+        #        real_noise[i][j] = random.gauss(1,noise)
+        #        imag_noise[i][j] = random.gauss(1,noise)
+        #print aper_r.shape, aper_l.shape
+        #aper_r = aper_r * abs(real_noise)
+        #aper_l = aper_l * abs(real_noise)
+        #phs_u = phs_u * imag_noise
+        #phs_v = phs_v * imag_noise
+        phs = exp(j*(phs_u + phs_v))
+
+        phs_aper_r = aper_r * phs
+        phs_aper_l = aper_l * phs
+
+        imageFromArray(real(phs_aper_r),image+"R")
+        imageFromArray(real(phs_aper_l),image+"L")
+
+        volt_r = fftpack.ifftshift(fftpack.fft2(fftpack.fftshift(phs_aper_r)))
+        volt_l = fftpack.ifftshift(fftpack.fft2(fftpack.fftshift(phs_aper_l)))
+        
+        imageFromArray(real(volt_r),image+"Rreal")
+        imageFromArray(imag(volt_r),image+"Rimag")
+        imageFromArray(real(volt_l),image+"Lreal")
+        imageFromArray(imag(volt_l),image+"Limag")
+
+        del aper_r,aper_l,phs,phs_u,phs_v,volt_r,volt_l,\
+            phs_aper_r,phs_aper_l,uu, vv, uvals, vvals
+
+        return Nxy
+
+###############################################
+
+def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',coord="coord.torecord()",
+                    reffreq='1.5GHz', pbname = "model",
+                    aper1_Rreal = "aper00Rreal", aper1_Rimag = "aper00Rimag",
+                    aper2_Rreal = "aper01Rreal", aper2_Rimag = "aper01Rimag",
+                    aper1_Lreal = "aper00Lreal", aper1_Limag = "aper00Limag",
+                    aper2_Lreal = "aper01Lreal", aper2_Limag = "aper01Limag",
+                    Nxy = 200, area = -1):
+
+        power_r = zeros((imsize,imsize))
+        power_l = zeros((imsize,imsize))
+
+        i = 0
+        while i < 2:
+            if i == 0:
+                aper1_real = aper1_Rreal
+                aper1_imag = aper1_Rimag
+                aper2_real = aper2_Rreal
+                aper2_imag = aper2_Rimag
+            else:
+                aper1_real = aper1_Lreal
+                aper1_imag = aper1_Limag
+                aper2_real = aper2_Lreal
+                aper2_imag = aper2_Limag
+                
+            # Combine aperture files to make complex aperture array
+            ia.open(aper1_real)
+            a1_real = ia.getchunk()
+            ia.close()
+
+            ia.open(aper1_imag)
+            a1_imag = ia.getchunk()
+            ia.close()
+
+            ia.open(aper2_real)
+            a2_real = ia.getchunk()
+            ia.close()
+
+            ia.open(aper2_imag)
+            a2_imag = ia.getchunk()
+            ia.close()
+
+            time1 = time.time()
+            aper1 = a1_real + (sqrt(-1) * a1_imag)
+            aper2 = a2_real + (sqrt(-1) * a2_imag)
+            power = aper1 * aper2
+            #auto_corr = signal.fftconvolve(aper1, aper2, 'same')
+            time2 = time.time()
+            print "convolution time = " + str(time2-time1)
+
+            # Power pattern function
+            #power = (Nxy**2) * fftpack.ifft2(fftpack.fftshift(auto_corr))
+            #time3 = time.time()
+            #print "power time = " + str(time3-time2)
+            #power = fftpack.ifftshift(power)
+            power = power / max(power)
+
+            if i == 0:
+                power_r = power
+            else:
+                power_l = power
+
+            i = i + 1
+
+        stokes_power = zeros((imsize,imsize,4,1))
+        stokes_power[:,:,0,0] = (power_r[:,:] + power_l[:,:]) / 2
+        stokes_power[:,:,3,0] = (power_r[:,:] - power_l[:,:]) / 2
+
+        imageFromArray(real(stokes_power),pbname+"real",coord)
+        imageFromArray(imag(stokes_power),pbname+"imag",coord)
+
+        aper_area = -1
+
+        del aper1_real, aper1_imag, aper2_real, aper2_imag, power,\
+            power_r, power_l, stokes_power
+        
 ###############################################
 
 def makeResidualImage(msname='',resname='',imsize=256,cellsize='8.0arcsec',
