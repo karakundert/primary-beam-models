@@ -53,7 +53,7 @@ def makeMS(runnum=0, makeBeams = True,
       predict_imsize = 1024
       cellsize='1.38arcsec';
       reffreq='100.0GHz';
-      stokesvals=[1.0,0.0,0.0,1.0]
+      stokesvals=[1.0,1.0,0.0,0.0]
       ftm='ft'
 
       num_ant = 3

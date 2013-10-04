@@ -59,7 +59,7 @@ reffreq = '100.0GHz'
 #        ras=["0.0arcmin"],decs=["0.0arcmin"],
 #        spxs=[0.0],reffreq=reffreq);
 makeComponentList(clname=clname+'0.cl',ncomps=1,shapes=['point'],
-        fluxvals=[[1.0,0.0,0.0,1.0]],
+        fluxvals=[[1.0,1.0,0.0,0.0]],
         minaxes=[""], majaxes=[""], posangles=[""],
         ras=["10.0arcsec"],decs=["10.0arcsec"],
         spxs=[0.0],reffreq=reffreq);
