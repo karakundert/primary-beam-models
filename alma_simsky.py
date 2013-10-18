@@ -65,7 +65,7 @@ def makeMS(runnum=0, makeBeams = True,
           os.system('rm -rf theresult.*')
 
           clname = clname+str(i)+'.cl'
-          makeMSFrame(dirname=dirname,msname=msname,
+          d = makeMSFrame(dirname=dirname,msname=msname,
                       ra0=ra0,dec0=dec0,nchan=nchan,numants=num_ant);
 
           os.system('mkdir '+apname)
@@ -90,7 +90,7 @@ def makeMS(runnum=0, makeBeams = True,
               image = apname+"/aper%02d" % i
               Nxy = makeAperture(image=image,imsize=imsize,
                               cellsize=cellsize,reffreq=reffreq,
-                              noise=noise,supports=supports,
+                              d=d[i],noise=noise,supports=supports,
                               ell_u=ell_u,ell_v=ell_v,
                               pointing=pointing)
               Nxy_list.append(Nxy)
@@ -261,6 +261,8 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan,numants):
   sm.close();
 
   listobs(vis=msname)
+  
+  return d
 
 ###############################################
 
@@ -272,7 +274,7 @@ def imageFromArray(arr,outfile,coord={},linear=F):
 ###############################################
 
 def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
-                    reffreq='1.5GHz', noise = 0.0, supports=True,
+                    reffreq='1.5GHz', d = 12.0, noise = 0.0, supports=True,
                     ell_u = 1.0, ell_v = 1.0,
                     pointing = True):
 
@@ -291,7 +293,6 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
         c = 3e8
         j = sqrt(-1)
         wvlen = c / freq # observed wavelength
-        d = 25 # width of a dish in m
         spat_lam = d / wvlen
 
         # Image pixels
@@ -576,7 +577,7 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,1.0],imname='',newimname='',
       print "open files: " + str(time2-time1)
         
       tb.open(msname)
-      tb1 = tb.query('SCAN_NUMBER=='+str(scanid+1))
+      tb1 = tb.query('SCAN_NUMBER=='+str(scanid))
       timelist = tb1.getcol('TIME')
       print len(timelist)
       tb1.close()
@@ -612,7 +613,7 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,1.0],imname='',newimname='',
 
       ### Predicting
       im.open(msname,usescratch=True);
-      im.selectvis(baseline=pair,nchan=nchan,start=0,step=1,scan=str(scanid+1));
+      im.selectvis(baseline=pair,nchan=nchan,start=0,step=1,scan=str(scanid));
       im.defineimage(nx=imsize,ny=imsize,cellx=cellsize,celly=cellsize,
                      stokes='IQUV',spw=[0],
                      phasecenter=me.direction(rf='J2000',v0=ra0,v1=dec0),

@@ -62,7 +62,7 @@ def makeMS(runnum=0, makeBeams = True,
           os.system('rm -rf theresult.*')
 
           clname = clname+str(i)+'.cl'
-          makeMSFrame(dirname=dirname,msname=msname,
+          d = makeMSFrame(dirname=dirname,msname=msname,
                       ra0=ra0,dec0=dec0,nchan=nchan);
 
           os.system('mkdir '+apname)
@@ -87,7 +87,7 @@ def makeMS(runnum=0, makeBeams = True,
               image = apname+"/aper%02d" % i
               Nxy = makeAperture(image=image,imsize=imsize,
                               cellsize=cellsize,reffreq=reffreq,
-                              noise=noise,supports=supports,
+                              d=d[i],noise=noise,supports=supports,
                               ell_u=ell_u,ell_v=ell_v,
                               pointing=pointing)
               Nxy_list.append(Nxy)
@@ -236,6 +236,8 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan):
   sm.close();
 
   listobs(vis=msname)
+
+  return d
 
 ###############################################
 

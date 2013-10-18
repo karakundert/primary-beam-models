@@ -24,7 +24,8 @@ def imageFromArray(arr,outfile,coord={},linear=F):
 ###############################################
 
 def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
-                    reffreq='1.5GHz', noise = 0.0, supports=True,
+                    reffreq='1.5GHz', d = 25.0, 
+                    noise = 0.0, supports=True,
                     ell_u = 1.0, ell_v = 1.0,
                     pointing = True):
 
@@ -109,9 +110,10 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
         imageFromArray(imag(aper_l),"squint_l")
 
         # Add phase ramp to aperture function
+        max_offset = 0.10*wvlen/d
         if pointing == True:
-            offset_u = str(random.uniform(-0.5,0.5))+'arcmin'
-            offset_v = str(random.uniform(-0.5,0.5))+'arcmin'
+            offset_u = str(random.uniform(-max_offset,max_offset))+'arcmin'
+            offset_v = str(random.uniform(-max_offset,max_offset))+'arcmin'
         else:
             offset_u = '0.0arcmin'
             offset_v = '0.0arcmin'
