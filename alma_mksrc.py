@@ -46,21 +46,45 @@ def makeComponentList(clname="sim.cl",reffreq="1.5GHz",
 
 clname = 'mysources';
 ra0="19:59:28.500";
-dec0="-40.44.01.50";
+dec0="-23.44.01.50";
 reffreq = '100.0GHz'
 
 
 # Make a list of components.
 # components placed such that there is one source per simulation, place
 # full-power, half-power, and around 10-20% power points of the beam.
-#makeComponentList(clname=clname+'0.cl',ncomps=1,shapes=['point'],
-#        fluxvals=[[1.0,0.0,0.0,1.0]],
-#        minaxes=[""], majaxes=[""], posangles=[""],
-#        ras=["0.0arcmin"],decs=["0.0arcmin"],
-#        spxs=[0.0],reffreq=reffreq);
 makeComponentList(clname=clname+'0.cl',ncomps=1,shapes=['point'],
         fluxvals=[[1.0,1.0,0.0,0.0]],
         minaxes=[""], majaxes=[""], posangles=[""],
         ras=["10.0arcsec"],decs=["10.0arcsec"],
         spxs=[0.0],reffreq=reffreq);
+
+i = 0
+max_srcs = 5
+ras = []
+decs = []
+fluxvals = []
+shapes = []
+minaxes = []
+majaxes = []
+posangles = []
+spxs = []
+
+while i < max_srcs:
+    ra = str(0.85*random.uniform(-1.0,1.0))+'arcmin'
+    dec = str(0.85*random.uniform(-1.0,1.0))+'arcmin'
+    ras.append(ra)
+    decs.append(dec)
+    fluxvals.append([1.0,1.0,0.0,0.0])
+    shapes.append('point')
+    minaxes.append("")
+    majaxes.append("")
+    posangles.append("")
+    spxs.append(0.0)
+    i = i + 1
+
+makeComponentList(clname=clname+'1.cl', ncomps=max_srcs,
+        shapes=shapes, fluxvals=fluxvals,
+        minaxes=minaxes, majaxes=majaxes, posangles=posangles,
+        ras=ras, decs=decs, spxs=spxs, reffreq=reffreq);
                             

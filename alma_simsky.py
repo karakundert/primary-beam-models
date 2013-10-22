@@ -47,7 +47,7 @@ def makeMS(runnum=0, makeBeams = True,
       apname = dirname+"/apertures"
       clname = "mysources"
       ra0="19:59:28.500";
-      dec0="-40.44.01.50";
+      dec0="-23.44.01.50";
       nchan=1;
       imsize=2048;
       predict_imsize = 1024
@@ -56,7 +56,7 @@ def makeMS(runnum=0, makeBeams = True,
       stokesvals=[1.0,1.0,0.0,0.0]
       ftm='ft'
 
-      num_ant = 3
+      num_ant = 10
 
       #addNoise(msname);
       if makeBeams == True:
@@ -146,6 +146,8 @@ def makeMS(runnum=0, makeBeams = True,
                   continue
 
       makeDataTable(msname=msname)
+      makeResidualImage(msname, resname, imsize, cellsize, ra0, dec0, nchan,
+              reffreq)
       clname = 'mysources'
 
       # The sources are located in one quadrant of the sky, and therefore one
@@ -155,16 +157,16 @@ def makeMS(runnum=0, makeBeams = True,
       # sources. If you change the image size (imsize), then you must change the
       # statistics regions to match.
 
-      #ia.open(resname)
-      #stats0 = ia.statistics(logfile=dirname+'/all_stats.txt')
-      #qq = rg.box(blc=[1500,100,0,0],trc=[1600,200,0,0])
-      #stats1 = ia.statistics(region=qq,logfile=dirname+'/off_source_stats.txt')
-      #qq = rg.box(blc=[1030,1040,0,0],trc=[1050,1060,0,0])
-      #stats2 = ia.statistics(region=qq,logfile=dirname+'/near_source_stats.txt')
-      #ia.close()
+      ia.open(resname)
+      stats0 = ia.statistics(logfile=dirname+'/all_stats.txt')
+      qq = rg.box(blc=[1500,100,0,0],trc=[1600,200,0,0])
+      stats1 = ia.statistics(region=qq,logfile=dirname+'/off_source_stats.txt')
+      qq = rg.box(blc=[1030,1040,0,0],trc=[1050,1060,0,0])
+      stats2 = ia.statistics(region=qq,logfile=dirname+'/near_source_stats.txt')
+      ia.close()
 
 
-  ##return [stats0,stats1,stats2]
+  return [stats0,stats1,stats2]
 
 ###############################################
 
@@ -214,23 +216,26 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan,numants):
   #x = zeros(numants, 'float')
   #y = zeros(numants, 'float')
   #z = zeros(numants, 'float')
-  xx,yy,zz,d,pnames,nant,telescopename = util.readantenna('alma.cycle0.compact.cfg')
+  xx,yy,zz,d,pnames,nant,telescopename = util.readantenna('alma.cycle2.5.cfg')
   an = pnames[0:numants]
   d = d[0:numants]
-  nn = len(xx)*2.0;
-  i = 0
+  nn = len(xx);
+  #i = 0
   #while i < numants:
   #    x[i] = (xx[i] - (sum(pl.array(xx[i]))/(nn)));
   #    y[i] = (yy[i] - (sum(pl.array(yy[i]))/(nn)));
   #    z[i] = (zz[i] - (sum(pl.array(zz[i]))/(nn)));
   #    i = i + 1
-  x = (xx - (sum(pl.array(xx))/(nn)));
-  y = (yy - (sum(pl.array(yy))/(nn)));
-  z = (zz - (sum(pl.array(zz))/(nn)));
+  #x = (xx - (sum(pl.array(xx))/(nn)));
+  #y = (yy - (sum(pl.array(yy))/(nn)));
+  #z = (zz - (sum(pl.array(zz))/(nn)));
 
-  x = x[0:numants]
-  y = y[0:numants]
-  z = z[0:numants]
+  pl.plot(xx,yy,"o")
+  pl.savefig('ants')
+
+  x = xx[0:numants]
+  y = yy[0:numants]
+  z = zz[0:numants]
 
 
   obspos = me.observatory('ALMA');
@@ -238,9 +243,12 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan,numants):
 
   ## Make MS Frame
   sm.open(ms=msname);
-  sm.setconfig(telescopename='ALMA',x=x.tolist(),y=y.tolist(),z=z.tolist(),dishdiameter=d,
+  sm.setconfig(telescopename='ALMA',x=x,y=y,z=z,dishdiameter=d,
                mount=['alt-az'], antname=an,
-               coordsystem='local',referencelocation=obspos);
+               coordsystem='global',referencelocation=obspos);
+  #sm.setconfig(telescopename='ALMA',x=x.tolist(),y=y.tolist(),z=z.tolist(),dishdiameter=d,
+  #             mount=['alt-az'], antname=an,
+  #             coordsystem='global',referencelocation=obspos);
   sm.setspwindow(spwname="3Band",freq="100.0GHz",deltafreq='500MHz',
                  freqresolution='2MHz',nchannels=nchan,stokes=msstokes);
   sm.setfeed(mode=feedtype,pol=['']);
@@ -249,9 +257,9 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan,numants):
   sm.setauto(autocorrwt=0.0);
   sm.settimes(integrationtime='1800s', usehourangle=True,
                        referencetime=me.epoch('UTC','2013/05/10/00:00:00'));
-  # Every 30 minutes, from -3h to +3h
+  # Every 30 minutes, from -1h to +1h
   ostep = 0.5
-  for loop in pl.arange(-3.0,+3.0,ostep):
+  for loop in pl.arange(-1.0,+1.0,ostep):
     starttime = loop
     stoptime = starttime + ostep
     print starttime, stoptime
@@ -274,7 +282,7 @@ def imageFromArray(arr,outfile,coord={},linear=F):
 ###############################################
 
 def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
-                    reffreq='1.5GHz', d = 12.0, noise = 0.0, supports=True,
+                    reffreq='1.5GHz', d = 12.0, noise = 0.0, supports = True,
                     ell_u = 1.0, ell_v = 1.0,
                     pointing = True):
 
@@ -558,7 +566,7 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,1.0],imname='',newimname='',
                    nchan=1, reffreq='1.5GHz',
                    num_ant = 28, pair="00&&01",model = True):
 
-  for scanid in range(12):
+  for scanid in range(4):
       print "scan #" + str(scanid)
       time1 = time.time()
       cmd = 'cp -r '+imname+' '+newimname
@@ -577,7 +585,7 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,1.0],imname='',newimname='',
       print "open files: " + str(time2-time1)
         
       tb.open(msname)
-      tb1 = tb.query('SCAN_NUMBER=='+str(scanid))
+      tb1 = tb.query('SCAN_NUMBER=='+str(scanid+1))
       timelist = tb1.getcol('TIME')
       print len(timelist)
       tb1.close()
@@ -613,7 +621,7 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,1.0],imname='',newimname='',
 
       ### Predicting
       im.open(msname,usescratch=True);
-      im.selectvis(baseline=pair,nchan=nchan,start=0,step=1,scan=str(scanid));
+      im.selectvis(baseline=pair,nchan=nchan,start=0,step=1,scan=str(scanid+1));
       im.defineimage(nx=imsize,ny=imsize,cellx=cellsize,celly=cellsize,
                      stokes='IQUV',spw=[0],
                      phasecenter=me.direction(rf='J2000',v0=ra0,v1=dec0),
