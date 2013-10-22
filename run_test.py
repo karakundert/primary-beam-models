@@ -87,7 +87,7 @@ class Test:
         os.system('mv Data* %s' % self.name)
 
     def plot(self):
-        for level in ['centered', 'half-power', 'low-power']:
+        for level in ['centered', 'multi']:
             # gemerates plots for all sources for given test run
             # code below specifies x-axis for plot
             if callable(self.xtransform):

@@ -30,14 +30,12 @@ def makeMS(runnum=0, makeBeams = True,
            pointing = False, theta = 0.0):
 
 
-  for i in xrange(1):
+  for i in xrange(2):
       dirname = "Data"+str(runnum)
       if i == 0:
           dirname = dirname+"-centered"
-      elif i == 1:
-          dirname = dirname+"-half-power"
       else:
-          dirname = dirname+"-low-power"
+          dirname = dirname+"-multi"
       basename = dirname+"/points"
       msname = basename + '.ms';
       imname = basename+'.true.im';
