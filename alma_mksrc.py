@@ -1,5 +1,5 @@
 def makeComponentList(clname="sim.cl",reffreq="1.5GHz",
-		      ra0="19:59:28.500",dec0="-40.44.01.50",
+		      ra0="19:59:28.500",dec0="-23.44.01.50",
 		      ncomps=1,shapes=["Gaussian"],
 		      fluxvals=[1.0],minaxes=["1.0arcmin"],
 		      majaxes=["1.0arcmin"],ras=["5.0arcmin"],
@@ -51,18 +51,14 @@ reffreq = '100.0GHz'
 
 
 # Make a list of components.
-# components placed such that there is one source per simulation, place
-# full-power, half-power, and around 10-20% power points of the beam.
 makeComponentList(clname=clname+'0.cl',ncomps=1,shapes=['point'],
-        fluxvals=[[1.0,1.0,0.0,0.0]],
+        fluxvals=[[1.0,1.0,0.0,0.0]], ra0=ra0, dec0=dec0,
         minaxes=[""], majaxes=[""], posangles=[""],
         ras=["10.0arcsec"],decs=["10.0arcsec"],
         spxs=[0.0],reffreq=reffreq);
 
 i = 0
 max_srcs = 5
-ras = []
-decs = []
 fluxvals = []
 shapes = []
 minaxes = []
@@ -70,11 +66,10 @@ majaxes = []
 posangles = []
 spxs = []
 
+ras = ["-0.1arcmin","1.4arcmin","-0.3arcmin","-0.5arcmin","0.4arcmin"]
+decs = ["-0.3arcmin","0.0arcmin","0.4arcmin","0.4arcmin","0.2arcmin"]
+
 while i < max_srcs:
-    ra = str(0.85*random.uniform(-1.0,1.0))+'arcmin'
-    dec = str(0.85*random.uniform(-1.0,1.0))+'arcmin'
-    ras.append(ra)
-    decs.append(dec)
     fluxvals.append([1.0,1.0,0.0,0.0])
     shapes.append('point')
     minaxes.append("")
@@ -83,8 +78,11 @@ while i < max_srcs:
     spxs.append(0.0)
     i = i + 1
 
+print ras
+print decs
+
 makeComponentList(clname=clname+'1.cl', ncomps=max_srcs,
-        shapes=shapes, fluxvals=fluxvals,
+        shapes=shapes, fluxvals=fluxvals, ra0=ra0, dec0=dec0,
         minaxes=minaxes, majaxes=majaxes, posangles=posangles,
         ras=ras, decs=decs, spxs=spxs, reffreq=reffreq);
                             

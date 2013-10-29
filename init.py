@@ -21,3 +21,5 @@ def rp():
 def rpnm():
     run_test(tests=['pointing_no_make'], run=True, plot=False)
 
+def rr():
+    run_test(tests=['rot_aper'], run=True, plot=False)

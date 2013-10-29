@@ -27,7 +27,8 @@ util = simutil("")
 def makeMS(runnum=0, makeBeams = True,
            noise=0.0, supports=True,
            ell_u = 1.0, ell_v = 1.0,
-           pointing = False, theta = 0.0):
+           pointing = False, theta = 0.0,
+           rot = False):
 
 
   for i in xrange(2):
@@ -55,6 +56,8 @@ def makeMS(runnum=0, makeBeams = True,
       ftm='ft'
 
       num_ant = 10
+
+      rot_init = rot
 
       #addNoise(msname);
       if makeBeams == True:
@@ -84,14 +87,18 @@ def makeMS(runnum=0, makeBeams = True,
           
           Nxy_list = []
           for i in xrange(num_ant):
+              if i % 2:
+                  rot = False
               print "aper" + str(i)
+              print rot
               image = apname+"/aper%02d" % i
               Nxy = makeAperture(image=image,imsize=imsize,
                               cellsize=cellsize,reffreq=reffreq,
                               d=d[i],noise=noise,supports=supports,
                               ell_u=ell_u,ell_v=ell_v,
-                              pointing=pointing)
+                              pointing=pointing,rot=rot)
               Nxy_list.append(Nxy)
+              rot = rot_init
           for i in xrange(num_ant):
               for j in xrange(num_ant):
                   if i < j:
@@ -100,14 +107,14 @@ def makeMS(runnum=0, makeBeams = True,
                       makePrimaryBeam(imsize=imsize,cellsize=cellsize,
                                     coord = coord.torecord(),
                                     reffreq=reffreq,pbname=pbimage,
-                                    aper1_Rreal=apname+"/aper%02dRreal" % i,
-                                    aper1_Rimag=apname+"/aper%02dRimag" % i,
-                                    aper2_Rreal=apname+"/aper%02dRreal" % j,
-                                    aper2_Rimag=apname+"/aper%02dRimag" % j,
-                                    aper1_Lreal=apname+"/aper%02dLreal" % i,
-                                    aper1_Limag=apname+"/aper%02dLimag" % i,
-                                    aper2_Lreal=apname+"/aper%02dLreal" % j,
-                                    aper2_Limag=apname+"/aper%02dLimag" % j,
+                                    aper1_Rreal=apname+"/aper%02dXreal" % i,
+                                    aper1_Rimag=apname+"/aper%02dXimag" % i,
+                                    aper2_Rreal=apname+"/aper%02dXreal" % j,
+                                    aper2_Rimag=apname+"/aper%02dXimag" % j,
+                                    aper1_Lreal=apname+"/aper%02dYreal" % i,
+                                    aper1_Limag=apname+"/aper%02dYimag" % i,
+                                    aper2_Lreal=apname+"/aper%02dYreal" % j,
+                                    aper2_Limag=apname+"/aper%02dYimag" % j,
                                     Nxy=Nxy_list[i]);
                   else:
                       continue
@@ -214,7 +221,7 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan,numants):
   #x = zeros(numants, 'float')
   #y = zeros(numants, 'float')
   #z = zeros(numants, 'float')
-  xx,yy,zz,d,pnames,nant,telescopename = util.readantenna('alma.cycle2.5.cfg')
+  xx,yy,zz,d,pnames,nant,telescopename = util.readantenna('alma_config_files/alma.cycle2.5.cfg')
   an = pnames[0:numants]
   d = d[0:numants]
   nn = len(xx);
@@ -282,7 +289,7 @@ def imageFromArray(arr,outfile,coord={},linear=F):
 def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
                     reffreq='1.5GHz', d = 12.0, noise = 0.0, supports = True,
                     ell_u = 1.0, ell_v = 1.0,
-                    pointing = True):
+                    pointing = True, rot = False):
 
         # noise == True: there is Gaussian noise in the aperture function
         # supports == True: there are shadows from the support beams
@@ -337,12 +344,20 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
                     if disk[u][v] == True:
                         if supports == True:
                             # to get secondary reflector support beam shadows
-                            if u == (Nuv/2) or v == (Nuv/2):
-                                aper[u][v] = 0
-                            elif u == (Nuv/2 - 1) or v == (Nuv/2 - 1):
-                                aper[u][v] = 0
+                            if rot == True:
+                                if u == v:
+                                    aper[u][v] = 0
+                                elif v == Nuv - u - 1:
+                                    aper[u][v] = 0
+                                else:
+                                    aper[u][v] = 1.0 + random.gauss(0,noise)
                             else:
-                                aper[u][v] = 1.0 + random.gauss(0,noise);
+                                if u == (Nuv/2) or v == (Nuv/2):
+                                    aper[u][v] = 0
+                                elif u == (Nuv/2 - 1) or v == (Nuv/2 - 1):
+                                    aper[u][v] = 0
+                                else:
+                                    aper[u][v] = 1.0 + random.gauss(0,noise);
                         else:
                             aper[u][v] = 1.0 + random.gauss(0,noise);
        
@@ -389,8 +404,8 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
         #aper_r[1536:2560,1536:2560] = real_aper_r + j * imag_aper_r
         #aper_l[1536:2560,1536:2560] = real_aper_l + j * imag_aper_l
         
-        imageFromArray(imag(aper_r),"squint_r")
-        imageFromArray(imag(aper_l),"squint_l")
+        imageFromArray(imag(aper_r),"squint_x")
+        imageFromArray(imag(aper_l),"squint_y")
 
         # Add phase ramp to aperture function
         if pointing == True:
@@ -423,16 +438,16 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
         phs_aper_r = aper_r * phs
         phs_aper_l = aper_l * phs
 
-        imageFromArray(real(phs_aper_r),image+"R")
-        imageFromArray(real(phs_aper_l),image+"L")
+        imageFromArray(real(phs_aper_r),image+"X")
+        imageFromArray(real(phs_aper_l),image+"Y")
 
         volt_r = fftpack.ifftshift(fftpack.fft2(fftpack.fftshift(phs_aper_r)))
         volt_l = fftpack.ifftshift(fftpack.fft2(fftpack.fftshift(phs_aper_l)))
         
-        imageFromArray(real(volt_r),image+"Rreal")
-        imageFromArray(imag(volt_r),image+"Rimag")
-        imageFromArray(real(volt_l),image+"Lreal")
-        imageFromArray(imag(volt_l),image+"Limag")
+        imageFromArray(real(volt_r),image+"Xreal")
+        imageFromArray(imag(volt_r),image+"Ximag")
+        imageFromArray(real(volt_l),image+"Yreal")
+        imageFromArray(imag(volt_l),image+"Yimag")
 
         del aper_r,aper_l,phs,phs_u,phs_v,volt_r,volt_l,\
             phs_aper_r,phs_aper_l,uu, vv, uvals, vvals

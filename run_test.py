@@ -169,6 +169,9 @@ available_tests = [
         settings=[{'pointing': False, 'makeBeams': False},
             {'pointing': True, 'makeBeams': False}]),
     Test(
+        name='rot_aper', desc='With/Without Rotated Apertures',
+        settings=[{'rot': False}, {'rot': True}]),
+    Test(
         name='point_eccentricity', desc='Pointing Offset & Eccentricity',
         xaxis='offset_u',
         settings=[{'offset_u': offset_u, 'ell_u': ell_u}
