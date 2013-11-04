@@ -28,7 +28,7 @@ def makeMS(runnum=0, makeBeams = True,
            noise=0.0, supports=True,
            ell_u = 1.0, ell_v = 1.0,
            pointing = False, theta = 0.0,
-           rot = False):
+           rot = True):
 
 
   for i in xrange(2):
@@ -50,7 +50,7 @@ def makeMS(runnum=0, makeBeams = True,
       nchan=1;
       imsize=2048;
       predict_imsize = 1024
-      cellsize='1.38arcsec';
+      cellsize='0.6arcsec';
       reffreq='100.0GHz';
       stokesvals=[1.0,1.0,0.0,0.0]
       ftm='ft'
@@ -366,7 +366,8 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
         phs_r = zeros((Nuv,Nuv))
         phs_l = zeros((Nuv,Nuv))
 
-        offset_r = (0.06*wvlen/d)
+        #offset_r = (0.06*wvlen/d)
+        offset_r = 0
         phs_ru = -1 * (uvals[uu] + uvcell/2.0) * (offset_r) * 2 * pi
         phs_rv = -1 * (vvals[vv] + uvcell/2.0) * (offset_r) * 2 * pi
         phs_r = exp(j * (phs_ru + phs_rv))
@@ -409,18 +410,18 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
 
         # Add phase ramp to aperture function
         if pointing == True:
-            offset_u = str(random.uniform(-0.5,0.5))+'arcmin'
-            offset_v = str(random.uniform(-0.5,0.5))+'arcmin'
+            offset_u = str(random.uniform(-0.5,0.5))+'arcsec'
+            offset_v = str(random.uniform(-0.5,0.5))+'arcsec'
         else:
-            offset_u = '0.0arcmin'
-            offset_v = '0.0arcmin'
+            offset_u = '0.0arcsec'
+            offset_v = '0.0arcsec'
         phs_off_u = qa.quantity(offset_u)['value']
         phs_off_v = qa.quantity(offset_v)['value']
-        shift_u = phs_off_u # in arcmins
-        shift_v = phs_off_v # in arcmins
+        shift_u = phs_off_u # in arcsecs
+        shift_v = phs_off_v # in arcsecs
         phs = zeros((Nuv,Nuv))
-        phs_u = -1 * (uvals[uu] + uvcell/2.0) * ( shift_u / 60.0 * ( pi / 180.0 ) ) * 2 * pi
-        phs_v = -1 * (vvals[vv] + uvcell/2.0) * ( shift_v / 60.0 * ( pi / 180.0 ) ) * 2 * pi
+        phs_u = -1 * (uvals[uu] + uvcell/2.0) * ( shift_u / 60.0 / 60.0 * ( pi / 180.0 ) ) * 2 * pi
+        phs_v = -1 * (vvals[vv] + uvcell/2.0) * ( shift_v / 60.0 / 60.0 * ( pi / 180.0 ) ) * 2 * pi
 
         #real_noise = zeros((Nuv,Nuv))
         #imag_noise = zeros((Nuv,Nuv))
@@ -603,10 +604,12 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,1.0],imname='',newimname='',
       print len(timelist)
       tb1.close()
       tb.close()
-      theta = parang(msname,0,timelist[0])
-      if scanid == 0:
-          start_theta = theta
-      theta = theta - start_theta
+      theta = 0
+      theta = 0
+      #theta = parang(msname,0,timelist[0])
+      #if scanid == 0:
+      #    start_theta = theta
+      #theta = theta - start_theta
       print "time = " + str(timelist[0])
       print "theta = " + str(theta)
 
