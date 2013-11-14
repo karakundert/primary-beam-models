@@ -162,7 +162,7 @@ available_tests = [
         xlabel="Percent Increase in Semimajor Axis"),
     Test(
         name='pointing', desc='Pointing Offset', xtransform=1/6.8,
-        settings=[{'pointing': False}, {'pointing': True}]),
+        settings=[{'pointing': True}]),
     Test(
         name='pointing_no_make', desc='Pointing Offset',
         xtransform=1/6.8,

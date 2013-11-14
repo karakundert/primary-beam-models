@@ -23,10 +23,13 @@ def imageFromArray(arr,outfile,coord={},linear=F):
 
 ###############################################
 
-def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
-                    reffreq='1.5GHz', d = 25.0, 
-                    noise = 0.0, supports=True,
-                    ell_u = 1.0, ell_v = 1.0,
+def perturbAperture(image="model",imsize=256,cellsize='8.0arcsec',
+                    reffreq='1.5GHz', d = 25.0,
+                    aper_rreal = 'reaperture_pol5.im',
+                    aper_rimag = 'imaperture_pol5.im',
+                    aper_lreal = 'reaperture_pol8.im',
+                    aper_limag = 'imaperture_pol8.im',
+                    noise = 0.0,
                     pointing = True):
 
         # noise == True: there is Gaussian noise in the aperture function
@@ -74,56 +77,59 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
         aper_r = zeros((Nuv,Nuv), 'complex')
         aper_l = zeros((Nuv,Nuv), 'complex')
 
-        ia.open('reaperture_pol5.im')
+        ia.open(aper_rreal)
         aper_r_real = ia.getchunk()
         ia.close()
 
-        ia.open('imaperture_pol5.im')
+        ia.open(aper_rimag)
         aper_r_imag = ia.getchunk()
         ia.close()
 
-        ia.open('reaperture_pol8.im')
+        ia.open(aper_lreal)
         aper_l_real = ia.getchunk()
         ia.close()
 
-        ia.open('imaperture_pol8.im')
+        ia.open(aper_limag)
         aper_l_imag = ia.getchunk()
         ia.close()
 
-        real_aper_r = zeros((1024,1024))
-        imag_aper_r = zeros((1024,1024))
-        real_aper_l = zeros((1024,1024))
-        imag_aper_l = zeros((1024,1024))
+        real_aper_r = zeros((2048,2048))
+        imag_aper_r = zeros((2048,2048))
+        real_aper_l = zeros((2048,2048))
+        imag_aper_l = zeros((2048,2048))
 
         real_aper_r = aper_r_real[:,:,0,0]
         imag_aper_r = aper_r_imag[:,:,0,0]
         real_aper_l = aper_l_real[:,:,0,0]
         imag_aper_l = aper_l_imag[:,:,0,0]
 
-        low = Nuv / 2 - Nuv / 8
-        high = Nuv / 2 + Nuv / 8
-        print low, high
-        aper_r[low:high,low:high] = real_aper_r + j * imag_aper_r
-        aper_l[low:high,low:high] = real_aper_l + j * imag_aper_l
+        #low = Nuv / 2 - Nuv / 4
+        #high = Nuv / 2 + Nuv / 4
+        #print low, high
+        aper_r[:,:] = real_aper_r + j * imag_aper_r
+        aper_l[:,:] = real_aper_l + j * imag_aper_l
         
-        imageFromArray(imag(aper_r),"squint_r")
-        imageFromArray(imag(aper_l),"squint_l")
+        imageFromArray(imag(aper_r),"squint_H")
+        imageFromArray(imag(aper_l),"squint_V")
 
         # Add phase ramp to aperture function
-        max_offset = 0.10*wvlen/d
+        # offset measured in arcseconds. please remember before choosing offset
+        # values for VLA.
+        max_offset_VLA = 60*0.10*wvlen/d
+        max_offset_ALMA_uncor = 2.0
+        max_offset_ALMA_cor = 0.5
+        max_offset = max_offset_ALMA_cor
         if pointing == True:
-            offset_u = str(random.uniform(-max_offset,max_offset))+'arcmin'
-            offset_v = str(random.uniform(-max_offset,max_offset))+'arcmin'
+            offset_u = random.uniform(-max_offset,max_offset)
+            offset_v = random.uniform(-max_offset,max_offset)
         else:
-            offset_u = '0.0arcmin'
-            offset_v = '0.0arcmin'
-        phs_off_u = qa.quantity(offset_u)['value']
-        phs_off_v = qa.quantity(offset_v)['value']
-        shift_u = phs_off_u # in arcmins
-        shift_v = phs_off_v # in arcmins
+            offset_u = 0.0
+            offset_v = 0.0
+        shift_u = offset_u # in arcsecs
+        shift_v = offset_v # in arcsecs
         phs = zeros((Nuv,Nuv))
-        phs_u = -1 * (uvals[uu] + uvcell/2.0) * ( shift_u / 60.0 * ( pi / 180.0 ) ) * 2 * pi
-        phs_v = -1 * (vvals[vv] + uvcell/2.0) * ( shift_v / 60.0 * ( pi / 180.0 ) ) * 2 * pi
+        phs_u = -1 * (uvals[uu] + uvcell/2.0) * ( shift_u / 60.0 / 60.0 * ( pi / 180.0 ) ) * 2 * pi
+        phs_v = -1 * (vvals[vv] + uvcell/2.0) * ( shift_v / 60.0 / 60.0 * ( pi / 180.0 ) ) * 2 * pi
 
         real_noise = noise * randn(Nuv,Nuv) + 1
         imag_noise = noise * randn(Nuv,Nuv) + 1
@@ -140,16 +146,16 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
         phs_aper_r = aper_r * phs
         phs_aper_l = aper_l * phs
 
-        imageFromArray(real(phs_aper_r),image+"R")
-        imageFromArray(real(phs_aper_l),image+"L")
+        imageFromArray(real(phs_aper_r),image+"H")
+        imageFromArray(real(phs_aper_l),image+"V")
 
         volt_r = fftpack.ifftshift(fftpack.fft2(fftpack.fftshift(phs_aper_r)))
         volt_l = fftpack.ifftshift(fftpack.fft2(fftpack.fftshift(phs_aper_l)))
         
-        imageFromArray(real(volt_r),image+"Rreal")
-        imageFromArray(imag(volt_r),image+"Rimag")
-        imageFromArray(real(volt_l),image+"Lreal")
-        imageFromArray(imag(volt_l),image+"Limag")
+        imageFromArray(real(volt_r),image+"Hreal")
+        imageFromArray(imag(volt_r),image+"Himag")
+        imageFromArray(real(volt_l),image+"Vreal")
+        imageFromArray(imag(volt_l),image+"Vimag")
 
         del aper_r,aper_l,phs,phs_u,phs_v,volt_r,volt_l,\
             phs_aper_r,phs_aper_l,uu, vv, uvals, vvals
@@ -158,12 +164,12 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
 
 ###############################################
 
-def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',coord="coord.torecord()",
+def makePrimaryBeam_VLA(imsize=256,cellsize='8.0arcsec',coord="coord.torecord()",
                     reffreq='1.5GHz', pbname = "model",
-                    aper1_Rreal = "aper00Rreal", aper1_Rimag = "aper00Rimag",
-                    aper2_Rreal = "aper01Rreal", aper2_Rimag = "aper01Rimag",
-                    aper1_Lreal = "aper00Lreal", aper1_Limag = "aper00Limag",
-                    aper2_Lreal = "aper01Lreal", aper2_Limag = "aper01Limag",
+                    aper1_Rreal = "aper00Hreal", aper1_Rimag = "aper00Himag",
+                    aper2_Rreal = "aper01Hreal", aper2_Rimag = "aper01Himag",
+                    aper1_Lreal = "aper00Vreal", aper1_Limag = "aper00Vimag",
+                    aper2_Lreal = "aper01Vreal", aper2_Limag = "aper01Vimag",
                     Nxy = 200, area = -1):
 
         power_r = zeros((imsize,imsize))
