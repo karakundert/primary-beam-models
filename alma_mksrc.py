@@ -58,7 +58,7 @@ makeComponentList(clname=clname+'0.cl',ncomps=1,shapes=['point'],
         spxs=[0.0],reffreq=reffreq);
 
 i = 0
-max_srcs = 5
+max_srcs = 4
 fluxvals = []
 shapes = []
 minaxes = []
@@ -66,8 +66,8 @@ majaxes = []
 posangles = []
 spxs = []
 
-ras = ["-0.1arcmin","1.4arcmin","-0.3arcmin","-0.5arcmin","0.4arcmin"]
-decs = ["-0.3arcmin","0.0arcmin","0.4arcmin","0.4arcmin","0.2arcmin"]
+ras = ["-0.1arcmin","1.4arcmin","-0.5arcmin","0.4arcmin"]
+decs = ["-0.3arcmin","0.0arcmin","0.4arcmin","0.2arcmin"]
 
 while i < max_srcs:
     fluxvals.append([1.0,1.0,0.0,0.0])
