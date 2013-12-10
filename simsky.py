@@ -14,10 +14,12 @@ import matplotlib.pylab as pl
 import random
 import time
 
-execfile('mksrc.py')
-execfile('parang.py')
-execfile('writeAps.py')
-execfile('makeBeams.py')
+sourcedir = '/lustre/kkundert/Code/'
+
+execfile(sourcedir+'mksrc.py')
+execfile(sourcedir+'parang.py')
+execfile(sourcedir+'writeAps.py')
+execfile(sourcedir+'makeBeams.py')
 
 ###############################################
 
@@ -96,7 +98,7 @@ def makeMS(runnum=0, makeBeams = True,
                   if i < j:
                       pbimage = pbname+"/pb%02d&&%02d" % (i,j)
                       print "primary beam"+str(i)+"&&"+str(j)
-                      makePrimaryBeam(imsize=imsize,cellsize=cellsize,
+                      makePrimaryBeam_VLA(imsize=imsize,cellsize=cellsize,
                                     coord = coord.torecord(),
                                     reffreq=reffreq,pbname=pbimage,
                                     aper1_Rreal=apname+"/aper%02dRreal" % i,
