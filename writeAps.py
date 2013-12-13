@@ -16,7 +16,7 @@ def writeApertures(msname='', imname='', pblimit=1e-04):
                 applypointingoffsets=False,
                 dopbgriddingcorrections=False,
                 cfcachedirname=msname+'.cfcache',
-                pastep=360.0, rotpastep=360.0,pblimit=pblimit,
+                pastep=360.0, pblimit=pblimit,
                 psterm=False, aterm=True, wbawp=False,mterm=False,conjbeams=False);
   im.ft(model=imname,incremental=False);
   im.close();
