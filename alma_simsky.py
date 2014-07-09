@@ -34,36 +34,40 @@ def makeMS(runnum=0, makeBeams = True,
 
 
   for i in xrange(2):
+      run_num = i
       dirname = "Data"+str(runnum)
       if i == 0:
-          dirname = dirname+"-single"
+          dirname = dirname+"-points"
       else:
-          dirname = dirname+"-multi"
+          dirname = dirname+"-M51"
       basename = dirname+"/points"
       msname = basename + '.ms';
       imname = basename+'.true.im';
+      pb_imname = basename+'.true.im.pb';
       predict_imname = imname + '.predict'
       resname = dirname+"/pb-residuals-"+str(runnum)
       pbname = dirname+"/primary-beams"
       apname = dirname+"/apertures"
       clname = "mysources"
-      ra0="19:59:28.500";
-      dec0="-23.44.01.50";
+      ra0="13:29:53.933";
+      dec0="-47.11.42.205";
       nchan=1;
       imsize=2048;
       predict_imsize = 1024
-      cellsize='0.5arcsec';
+      cellsize='0.1arcsec';
+      pb_cellsize = '0.5arcsec';
       reffreq='100.0GHz';
       stokesvals=[1.0,1.0,0.0,0.0]
       ftm='ft'
 
-      num_ant = 10
+      num_ant = 34
 
       #rot = True
 
       rot_init = rot
       makeAper = False
       illum = True
+      size_diff = False
 
       #addNoise(msname);
       if makeBeams == True:
@@ -80,10 +84,29 @@ def makeMS(runnum=0, makeBeams = True,
 
           makeImage(msname=msname,imname=imname,clname=clname,
                     imsize=imsize,cellsize=cellsize,ra0=ra0,dec0=dec0,
-                    nchan=nchan,reffreq=reffreq)
+                    nchan=nchan,reffreq=reffreq,runnum=run_num)
 
-          ia.open(imname)
-          coord = ia.coordsys()
+          os.system('cp -r ' + imname + ' ' + pb_imname+'.real')
+          os.system('cp -r ' + imname + ' ' + pb_imname+'.imag')
+          
+          ia.open(pb_imname+'.real')
+          coord_pb = ia.coordsys()
+          pbres = 0.5 / 3600.0 * pi / 180.0 #pb resolution = 0.5 arcsec
+          incs = coord_pb.increment()
+          incs['numeric'][0] = pbres
+          incs['numeric'][1] = pbres
+          coord_pb.setincrement(incs)
+          ia.setcoordsys(coord_pb.torecord())
+          ia.close()
+
+          ia.open(pb_imname+'.imag')
+          coord_pb = ia.coordsys()
+          pbres = 0.5 / 3600.0 * pi / 180.0 #pb resolution = 0.5 arcsec
+          incs = coord_pb.increment()
+          incs['numeric'][0] = pbres
+          incs['numeric'][1] = pbres
+          coord_pb.setincrement(incs)
+          ia.setcoordsys(coord_pb.torecord())
           ia.close()
 
           #os.system('rm -rf ap.ms')
@@ -100,7 +123,7 @@ def makeMS(runnum=0, makeBeams = True,
               image = apname+"/aper%02d" % i
               if makeAper == True:
                   makeAperture(image=image,imsize=imsize,
-                                  cellsize=cellsize,reffreq=reffreq,
+                                  cellsize=pb_cellsize,reffreq=reffreq,
                                   d=d[i],supports=supports,
                                   ell_u=ell_u,ell_v=ell_v,
                                   rot=rot)
@@ -109,17 +132,32 @@ def makeMS(runnum=0, makeBeams = True,
                   aper_lreal = image+'real'
                   aper_limag = image+'imag'
               elif illum == True:
-                  path_name = \
-                  "/lustre/kkundert/Code/alma_apertures/DV/uid___A002_X69ec79_X22c_APC-DV"
-                  ant = [05,10,13,14,15,17,19,20,23,25]
-                  aper_rreal = \
-                  path_name+"%02d-H-LSB-beam_complex.aperture.real.regridded" % ant[i]
-                  aper_rimag = \
-                  path_name+"%02d-H-LSB-beam_complex.aperture.imag.regridded" % ant[i]
-                  aper_lreal = \
-                  path_name+"%02d-V-LSB-beam_complex.aperture.real.regridded" % ant[i]
-                  aper_limag = \
-                  path_name+"%02d-V-LSB-beam_complex.aperture.imag.regridded" % ant[i]
+                  if i % 2:
+                      if size_diff == True:
+                          aper_rreal = source_dir + \
+                                  '7m_aper_real'
+                          aper_rimag = source_dir + \
+                                  '7m_aper_imag'
+                          aper_lreal = source_dir + \
+                                  '7m_aper_real'
+                          aper_limag = source_dir + \
+                                  '7m_aper_imag'
+                  else:
+                      path_name = \
+                      "/lustre/kkundert/Code/alma_apertures/thesis_apertures/"
+                      ant = []
+                      ant.extend(['DA41','DA42','DA43','DA44','DA45','DA46','DA47','DA48','DA52'])
+                      ant.extend(['DA53','DA54','DA55','DA56','DA57','DA58','DV24','DV25'])
+                      ant.extend(['DV01','DV02','DV03','DV05','DV06','DV07','DV08','DV09','DV10'])
+                      ant.extend(['DV11','DV13','DV14','DV15','DV17','DV18','DV19','DV20','DV23'])
+                      aper_rreal = \
+                      path_name+"%s-H.real.regridded" % ant[i]
+                      aper_rimag = \
+                      path_name+"%s-H.imag.regridded" % ant[i]
+                      aper_lreal = \
+                      path_name+"%s-V.real.regridded" % ant[i]
+                      aper_limag = \
+                      path_name+"%s-V.imag.regridded" % ant[i]
               else:
                   if i % 2:
                       if rot == True:
@@ -149,7 +187,7 @@ def makeMS(runnum=0, makeBeams = True,
                               'APdir.DA/imaperture_pol12.im'
                               #'alma_apertures/MeasuredAperture_DA_V_LSB.im.imag.regridded'
               Nxy = perturbAperture(image=image,imsize=imsize,
-                              cellsize=cellsize,reffreq=reffreq,d=d[i],
+                              cellsize=pb_cellsize,reffreq=reffreq,d=d[i],
                               aper_rreal=aper_rreal,
                               aper_rimag=aper_rimag,
                               aper_lreal=aper_lreal,
@@ -164,8 +202,10 @@ def makeMS(runnum=0, makeBeams = True,
                       pbimage = pbname+"/pb%02d&&%02d" % (i,j)
                       print "primary beam"+str(i)+"&&"+str(j)
                       makePrimaryBeam(imsize=imsize,cellsize=cellsize,
-                                    coord = coord.torecord(),
                                     reffreq=reffreq,pbname=pbimage,
+                                    imname=imname,
+                                    pb_imname_real = pb_imname+'.real',
+                                    pb_imname_imag = pb_imname+'.imag',
                                     predict_imsize = predict_imsize,
                                     aper1_Rreal=apname+"/aper%02dHreal" % i,
                                     aper1_Rimag=apname+"/aper%02dHimag" % i,
@@ -184,11 +224,11 @@ def makeMS(runnum=0, makeBeams = True,
                       ra0=ra0,dec0=dec0,nchan=nchan,numants=num_ant);
           makeImage(msname=msname,imname=imname,clname=clname,
                     imsize=imsize,cellsize=cellsize,ra0=ra0,dec0=dec0,
-                    nchan=nchan,reffreq=reffreq)
+                    nchan=nchan,reffreq=reffreq,runnum=run_num)
 
       makeImage(msname=msname,imname=predict_imname,clname=clname,
                 imsize=predict_imsize,cellsize=cellsize,ra0=ra0,dec0=dec0,
-                nchan=nchan,reffreq=reffreq)
+                nchan=nchan,reffreq=reffreq,runnum=run_num)
 
       for i in xrange(num_ant):
           for j in xrange(num_ant):
@@ -282,7 +322,8 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan,numants):
   #x = zeros(numants, 'float')
   #y = zeros(numants, 'float')
   #z = zeros(numants, 'float')
-  xx,yy,zz,d,pnames,nant,telescopename = util.readantenna(source_dir+'alma_config_files/alma.cycle2.5.cfg')
+  xx,yy,zz,d,pnames,nant,telescopename = \
+          util.readantenna(source_dir+'alma_config_files/alma.cycle2.5.cfg')
   an = pnames[0:numants]
   d = d[0:numants]
   nn = len(xx);
@@ -324,7 +365,7 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan,numants):
   sm.settimes(integrationtime='1800s', usehourangle=True,
                        referencetime=me.epoch('UTC','2013/05/10/00:00:00'));
   # Every 30 minutes, from -1h to +1h
-  ostep = 0.5
+  ostep = 0.05
   for loop in pl.arange(-1.0,+1.0,ostep):
     starttime = loop
     stoptime = starttime + ostep
@@ -342,8 +383,9 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan,numants):
 
 def imageFromArray(arr,outfile,coord={},linear=F):
     newia = casac.image()
-    newia.fromarray(outfile=outfile,pixels=arr,csys=coord,linear=F,overwrite=T)
+    im = newia.newimagefromarray(outfile=outfile,pixels=arr,csys=coord,linear=F,overwrite=T)
     newia.close()
+    im.close()
 
 ###############################################
 
@@ -436,8 +478,10 @@ def makeAperture(image="model",imsize=256,cellsize='8.0arcsec',
 
 ###############################################
 
-def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',coord="coord.torecord()",
-                    reffreq='1.5GHz', pbname = "model",predict_imsize = 256,
+def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',reffreq='1.5GHz',pbname = "model",
+                    predict_imsize = 256, imname = 'points.true.im',
+                    pb_imname_real = 'points.true.im.real',
+                    pb_imname_imag = 'points.true.im.imag',
                     aper1_Rreal = "aper00Hreal", aper1_Rimag = "aper00Himag",
                     aper2_Rreal = "aper01Hreal", aper2_Rimag = "aper01Himag",
                     aper1_Lreal = "aper00Vreal", aper1_Limag = "aper00Vimag",
@@ -500,8 +544,33 @@ def makePrimaryBeam(imsize=256,cellsize='8.0arcsec',coord="coord.torecord()",
         stokes_power[:,:,0,0] = (power_r[:,:] + power_l[:,:]) / 2
         stokes_power[:,:,1,0] = (power_r[:,:] - power_l[:,:]) / 2
 
-        imageFromArray(real(stokes_power[low:high,low:high]),pbname+"real",coord)
-        imageFromArray(imag(stokes_power[low:high,low:high]),pbname+"imag",coord)
+        ia.open(pb_imname_real)
+        realpix = ia.getchunk()
+        realpix = real(stokes_power[:,:])
+        ia.putchunk(realpix)
+        ia.close()
+
+        ia.open(pb_imname_imag)
+        imagpix = ia.getchunk()
+        imagpix = imag(stokes_power[:,:])
+        ia.putchunk(imagpix)
+        ia.close()
+
+        imregrid(imagename=pb_imname_real,template=imname,output=pbname+'real.regridded',overwrite=True)
+        imregrid(imagename=pb_imname_imag,template=imname,output=pbname+'imag.regridded',overwrite=True)
+
+        ia.open(pbname+'real.regridded')
+        real_arr = ia.getchunk()
+        realcoord = ia.coordsys()
+        ia.close()
+
+        ia.open(pbname+'imag.regridded')
+        imag_arr = ia.getchunk()
+        imagcoord = ia.coordsys()
+        ia.close()
+
+        imageFromArray(real_arr[low:high,low:high],pbname+'real',realcoord.torecord())
+        imageFromArray(imag_arr[low:high,low:high],pbname+'imag',imagcoord.torecord())
 
         aper_area = -1
 
@@ -527,7 +596,7 @@ def makeResidualImage(msname='',resname='',imsize=256,cellsize='8.0arcsec',
 
 def makeImage(msname='',imname='',clname='mysource.cl',
               imsize=256,cellsize='8.0arcsec',ra0='',dec0='',
-              nchan=1,reffreq='1.5GHz'):
+              nchan=1,reffreq='1.5GHz',runnum=0):
 
   ## Make model image
   os.system('rm -rf '+imname+'*');
@@ -541,10 +610,19 @@ def makeImage(msname='',imname='',clname='mysource.cl',
   im.make(image=imname);
   im.done();
 
-  cl.open(clname)
-  ia.open(imname);
-  ia.modify(model=cl.torecord(),subtract=False);
-  cl.close();
+  if runnum == 0:
+      cl.open(clname)
+      ia.open(imname);
+      ia.modify(model=cl.torecord(),subtract=False);
+      cl.close();
+  else:
+      ia.open('/lustre/kkundert/Code/test_images/M51ha.im.smooth')
+      arr = ia.getchunk()
+      ia.close()
+
+      ia.open(imname)
+      ia.putchunk(arr)
+      ia.close()
 
 ###############################################
 
@@ -556,7 +634,8 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,1.0],imname='',newimname='',
                    nchan=1, reffreq='1.5GHz',
                    num_ant = 28, pair="00&&01",model = True):
 
-  for scanid in range(4):
+  for scanid in range(1):
+      scanid = scanid + 1
       print "scan #" + str(scanid)
       time1 = time.time()
       cmd = 'cp -r '+imname+' '+newimname
@@ -613,7 +692,9 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,1.0],imname='',newimname='',
 
       ### Predicting
       im.open(msname,usescratch=True);
-      im.selectvis(baseline=pair,nchan=nchan,start=0,step=1,scan=str(scanid));
+      # for time dependent observations, add right number of scanids to loop
+      # parameters, and give scan parameter to im.selectvis
+      im.selectvis(baseline=pair,nchan=nchan,start=0,step=1);
       im.defineimage(nx=imsize,ny=imsize,cellx=cellsize,celly=cellsize,
                      stokes='IQUV',spw=[0],
                      phasecenter=me.direction(rf='J2000',v0=ra0,v1=dec0),
