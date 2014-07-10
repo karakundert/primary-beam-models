@@ -1,4 +1,6 @@
-execfile('run_test.py')
+source_dir = "/lustre/kkundert/Code/"
+
+execfile(source_dir+"run_test.py")
 
 def rnp():
     run_test(tests=['no_perturbation'], run=True, plot=False)

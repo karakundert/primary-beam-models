@@ -1,5 +1,7 @@
+source_dir = "/lustre/kkundert/Code/"
+
 #execfile('simsky.py')
-execfile('alma_simsky.py')
+execfile(source_dir+"alma_simsky.py")
 
 from numpy import *
 from scipy import *
@@ -87,7 +89,7 @@ class Test:
         os.system('mv Data* %s' % self.name)
 
     def plot(self):
-        for level in ['centered', 'multi']:
+        for level in ['single', 'multi']:
             # gemerates plots for all sources for given test run
             # code below specifies x-axis for plot
             if callable(self.xtransform):

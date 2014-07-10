@@ -67,7 +67,7 @@ def makeMS(runnum=0, makeBeams = True,
       rot_init = rot
       makeAper = False
       illum = True
-      size_diff = False
+      size_diff = True
 
       #addNoise(msname);
       if makeBeams == True:

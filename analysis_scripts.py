@@ -7,18 +7,18 @@ def autoAnalysis(testrun='',
 
     for u in xrange(2):
         if u == 0:
-            dirname = pathname + testrun + '/Data001-single'
+            dirname = pathname + testrun + '/Data000-points'
         else:
-            dirname = pathname + testrun + '/Data001-multi'
+            dirname = pathname + testrun + '/Data000-M51'
 
         imname = dirname + '/points.true.im'
         trueimage = imname + '.predict'
-        #cleanimage = imname + '.clean.image'
-        cleanimage = dirname + '/simple.image'
+        cleanimage = imname + '.clean.image'
+        #cleanimage = dirname + '/simple.image'
         smoothimage = imname + '.smooth'
         diffimage = imname + '.diffmap'
         pbdir = dirname + '/primary-beams'
-        numants = 10
+        numants = 34
         avgpb = pbdir + '/avgpb'
         pbcor = dirname + '/points.true.im.pbcor'
         diff = 0.0
@@ -87,7 +87,7 @@ def chiSquareNormalized(imtrue='',imobs='',beam=''):
 
     difference = 0.0
     pbsum = 0.0
-    noise = 1.0 * 10**-4
+    noise = 1.0 * 10**-2
     if len(true) == len(obs):
         N = len(true)
         for u in xrange(N):
