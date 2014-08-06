@@ -45,8 +45,8 @@ def makeComponentList(clname="sim.cl",reffreq="1.5GHz",
 ### field of you that you are simulating ! )
 
 clname = 'mysources';
-ra0="19:59:28.500";
-dec0="-23.44.01.50";
+ra0="13:29:53.933";
+dec0="-47.11.42.205";
 reffreq = '100.0GHz'
 
 
@@ -54,7 +54,7 @@ reffreq = '100.0GHz'
 makeComponentList(clname=clname+'0.cl',ncomps=1,shapes=['point'],
         fluxvals=[[1.0,1.0,0.0,0.0]], ra0=ra0, dec0=dec0,
         minaxes=[""], majaxes=[""], posangles=[""],
-        ras=["10.0arcsec"],decs=["10.0arcsec"],
+        ras=["15.0arcsec"],decs=["15.0arcsec"],
         spxs=[0.0],reffreq=reffreq);
 
 i = 0
@@ -66,17 +66,18 @@ majaxes = []
 posangles = []
 spxs = []
 
-ras = ["-0.1arcmin","1.4arcmin","-0.5arcmin","0.4arcmin"]
-decs = ["-0.3arcmin","0.0arcmin","0.4arcmin","0.2arcmin"]
+ras = ["0.31arcmin","0.29arcmin","0.33arcmin","0.32arcmin"]
+decs = ["0.32arcmin","0.30arcmin","0.33arcmin","0.28arcmin"]
 
 while i < max_srcs:
-    fluxvals.append([1.0,1.0,0.0,0.0])
-    shapes.append('point')
-    minaxes.append("")
-    majaxes.append("")
-    posangles.append("")
+    fluxvals.append([200.0,200.0,0.0,0.0])
+    shapes.append('gaussian')
     spxs.append(0.0)
     i = i + 1
+
+minaxes=["1.4arcsec","1.2arcsec","1.2arcsec","1.0arcsec"]
+majaxes=["2.0arcsec","1.5arcsec","2.8arcsec","2.5arcsec"]
+posangles=["40.0deg","0.0deg","-60.0deg","-75.0deg"]
 
 print ras
 print decs

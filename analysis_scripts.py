@@ -5,9 +5,11 @@ def autoAnalysis(testrun='',
 
     f = open(pathname + testrun + '/analysis_results.txt', 'w')
 
-    for u in xrange(2):
+    for u in xrange(3):
         if u == 0:
             dirname = pathname + testrun + '/Data000-points'
+        elif u == 1:
+            dirname = pathname + testrun + '/Data000-extended'
         else:
             dirname = pathname + testrun + '/Data000-M51'
 
@@ -23,6 +25,7 @@ def autoAnalysis(testrun='',
         pbcor = dirname + '/points.true.im.pbcor'
         diff = 0.0
         chinorm = 0.0
+        rms = 0.0
 
         averagePB(dirname=pbdir,numants=numants,avgpb=avgpb)
         pbCorImage(cleanimage=cleanimage,beam=avgpb,outfile=pbcor)
@@ -35,9 +38,12 @@ def autoAnalysis(testrun='',
             print 'peak difference is ' + str(diff)
             f.write(str(diff)+'\n')
         else:
-            chinorm = chiSquareNormalized(imtrue=smoothimage,imobs=cleanimage,beam=avgpb)
-            print 'normalized chi-squared is: ' + str(chinorm)
-            f.write(str(chinorm))
+            rms = rootMeanSquare(diffimage=diffimage)
+            print 'rms is: ' + str(rms)
+            f.write(str(rms))
+            #sigma = sigma(imtrue=smoothimage,imobs=cleanimage,beam=avgpb)
+            #print 'sigma is: ' + str(sigma)
+            #f.write(str(sigma))
         
     f.close()
             
@@ -87,7 +93,7 @@ def chiSquareNormalized(imtrue='',imobs='',beam=''):
 
     difference = 0.0
     pbsum = 0.0
-    noise = 1.0 * 10**-2
+    noise = 1.0 * 10**-3.5
     if len(true) == len(obs):
         N = len(true)
         for u in xrange(N):
@@ -104,6 +110,54 @@ def chiSquareNormalized(imtrue='',imobs='',beam=''):
 
     return chinorm
 
+def sigma(imtrue='',imobs='',beam=''):
+
+    # calculate chi-square distribution comparing model image to observed image
+    # normalized by expected noise levels
+    
+    ia.open(imtrue)
+    true = ia.getchunk()
+    ia.close()
+
+    ia.open(imobs)
+    obs = ia.getchunk()
+    ia.close()
+
+    ia.open(beam)
+    pb = ia.getchunk()
+    ia.close()
+
+    difference = 0.0
+    pbsum = 0.0
+    noise = 1.0 * 10**-2
+    if len(true) == len(obs):
+        N = len(true)
+        for u in xrange(N):
+            for v in xrange(N):
+                val = pb[u,v,0,0] * (obs[u,v,0,0] - true[u,v,0,0])
+                difference += val**2
+                pbsum += pb[u,v,0,0]
+                val = 0
+        variance = difference / ((N**2)-1)
+        sigma = variance / (pbsum)
+
+    else:
+        print "array sizes don't match, please choose different images"
+
+    return sigma
+
+def rootMeanSquare(diffimage=''):
+
+    ia.open(diffimage)
+    arr = ia.getchunk()
+    ia.close()
+
+    N = len(arr)
+    testarr = arr[N/2+N/4:N,N/2+N/4:N,0,0]
+
+    rms = sqrt(np.mean(testarr**2))
+    return rms
+    
 def pbCorImage(cleanimage='',beam='',outfile=''):
 
     os.system('cp -r ' + cleanimage + ' ' + outfile)

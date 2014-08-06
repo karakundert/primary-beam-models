@@ -33,11 +33,13 @@ def makeMS(runnum=0, makeBeams = True,
            rot = False):
 
 
-  for i in xrange(2):
+  for i in xrange(3):
       run_num = i
       dirname = "Data"+str(runnum)
       if i == 0:
           dirname = dirname+"-points"
+      elif i ==1:
+          dirname = dirname+"-extended"
       else:
           dirname = dirname+"-M51"
       basename = dirname+"/points"
@@ -66,7 +68,7 @@ def makeMS(runnum=0, makeBeams = True,
 
       rot_init = rot
       makeAper = False
-      illum = True
+      illum = False
       size_diff = True
 
       #addNoise(msname);
@@ -131,6 +133,23 @@ def makeMS(runnum=0, makeBeams = True,
                   aper_rimag = image+'imag'
                   aper_lreal = image+'real'
                   aper_limag = image+'imag'
+              if size_diff == True:
+                  if i % 2:
+                      aper_rreal = source_dir + \
+                      'alma_apertures/thesis_apertures/7m_aper_real'
+                      aper_rimag = source_dir + \
+                      'alma_apertures/thesis_apertures/7m_aper_imag'
+                      aper_lreal = source_dir + \
+                      'alma_apertures/thesis_apertures/7m_aper_real'
+                      aper_limag = source_dir + \
+                      'alma_apertures/thesis_apertures/7m_aper_imag'
+                  else:
+                      path_name = \
+                      "/lustre/kkundert/Code/alma_apertures/thesis_apertures/"
+                      aper_rreal = path_name+"DA41-H.real.regridded"
+                      aper_rimag = path_name+"DA41-H.imag.regridded"
+                      aper_lreal = path_name+"DA41-V.real.regridded"
+                      aper_limag = path_name+"DA41-V.imag.regridded"
               elif illum == True:
                   if i % 2:
                       if size_diff == True:
@@ -364,7 +383,7 @@ def makeMSFrame(dirname,msname,ra0,dec0,nchan,numants):
   sm.setauto(autocorrwt=0.0);
   sm.settimes(integrationtime='1800s', usehourangle=True,
                        referencetime=me.epoch('UTC','2013/05/10/00:00:00'));
-  # Every 30 minutes, from -1h to +1h
+  # Every 3 minutes, from -1h to +1h
   ostep = 0.05
   for loop in pl.arange(-1.0,+1.0,ostep):
     starttime = loop
@@ -615,6 +634,11 @@ def makeImage(msname='',imname='',clname='mysource.cl',
       ia.open(imname);
       ia.modify(model=cl.torecord(),subtract=False);
       cl.close();
+  elif runnum == 1:
+      cl.open(clname)
+      ia.open(imname);
+      ia.modify(model=cl.torecord(),subtract=False);
+      cl.close();
   else:
       ia.open('/lustre/kkundert/Code/test_images/M51ha.im.smooth')
       arr = ia.getchunk()
@@ -661,7 +685,7 @@ def makeTrueImage(stokesvals=[1.0,0.0,0.0,1.0],imname='',newimname='',
       tb.close()
       theta = 0
       #theta = parang(msname,0,timelist[0])
-      #if scanid == 0:
+      #if scanid == 1:
       #    start_theta = theta
       #theta = theta - start_theta
       print "time = " + str(timelist[0])
